@@ -12,20 +12,14 @@ using System.Windows.Forms;
 namespace UserPMNR {
     public partial class UserGUIForm : Form {
 
-        Client _client;
-
         public UserGUIForm() {
             InitializeComponent();
         }
 
-        public void INIT(string EntryURL) {
-            _client = new Client(EntryURL);
-        }
 
         private void bt_entryURL_Click(object sender, EventArgs e) {
             string entryURL = tb_entryURL.Text;
             if (CheckURLValid(entryURL.Trim())) {
-                INIT(entryURL);
                 bt_entryURL.Enabled = false;
                 tb_entryURL.ReadOnly = true;
                 bt_submitJob.Enabled = true;

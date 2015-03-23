@@ -5,6 +5,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PuppetMaster", "PuppetMaste
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserPMNR", "UserPMNR\UserPMNR.csproj", "{78A82A00-A8B6-48AA-A07D-E33A1516E427}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientPMNR", "ClientPMNR\ClientPMNR.csproj", "{603E4240-9E5E-4703-9CB6-9F649BE0FC88}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkerPMNR", "WorkerPMNR\WorkerPMNR.csproj", "{75E76B65-1FA7-469C-A817-82052C18C3A3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,6 +23,14 @@ Global
 		{78A82A00-A8B6-48AA-A07D-E33A1516E427}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{78A82A00-A8B6-48AA-A07D-E33A1516E427}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{78A82A00-A8B6-48AA-A07D-E33A1516E427}.Release|Any CPU.Build.0 = Release|Any CPU
+		{603E4240-9E5E-4703-9CB6-9F649BE0FC88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{603E4240-9E5E-4703-9CB6-9F649BE0FC88}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{603E4240-9E5E-4703-9CB6-9F649BE0FC88}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{603E4240-9E5E-4703-9CB6-9F649BE0FC88}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75E76B65-1FA7-469C-A817-82052C18C3A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75E76B65-1FA7-469C-A817-82052C18C3A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75E76B65-1FA7-469C-A817-82052C18C3A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75E76B65-1FA7-469C-A817-82052C18C3A3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

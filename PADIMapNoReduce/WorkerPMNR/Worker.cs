@@ -4,11 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UserPMNR {
-    class Client {
-
-        public Client(string EntryURL) {
-
+namespace WorkerPMNR {
+    class Worker {
+        static void Main(string[] args) {
         }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 using System.Threading.Tasks;
 using WorkerPMNR;
 using System.Runtime.Remoting;
@@ -14,12 +15,12 @@ namespace ClientPMNR {
     public class Client {
 
 
-        private Worker worker;
+        private RemoteWorker worker;
         private TcpChannel channel;
 
         public void INIT(string entryURL) {
 
-            worker = (Worker)Activator.GetObject(typeof(Worker), entryURL);
+            worker = (RemoteWorker)Activator.GetObject(typeof(RemoteWorker), entryURL);
 
             channel = new TcpChannel(8086);
             ChannelServices.RegisterChannel(channel, true);
@@ -27,9 +28,15 @@ namespace ClientPMNR {
 
         }
 
-        public bool SUBMIT(string inputFilePath, int numberSplits, string outputFolderPath, string dllFilePath) {
-
-
+        public bool SUBMIT(string inputFilePath, int numberSplits, string outputFolderPath, string dllFilePath, string className) {
+            
+            byte[] code = File.ReadAllBytes(dllFilePath);
+            try {
+                worker.SendMapper(code, className);
+            }
+            catch (Exception) {
+                Console.WriteLine("Mapeamento falhou.");
+            }
             return true;
         }
  

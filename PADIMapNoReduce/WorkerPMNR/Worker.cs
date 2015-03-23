@@ -32,6 +32,7 @@ namespace WorkerPMNR {
     }
 
     public class RemoteWorker : MarshalByRefObject {
+
         public bool SendMapper(byte[] code, string className) {
             Assembly assembly = Assembly.Load(code);
             // Walk through each type in the assembly looking for our class

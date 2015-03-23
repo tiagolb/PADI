@@ -9,8 +9,8 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace PuppetMaster {
-    public partial class Form1 : Form {
-        public Form1() {
+    public partial class PuppetMasterForm : Form {
+        public PuppetMasterForm() {
             InitializeComponent();
         }
 

@@ -7,3 +7,6 @@ C:\Users\Tiago\Documents\Faculdade\Master\1A2S\PADI\PADI\PADIMapNoReduce\PuppetM
 C:\Users\Tiago\Documents\Faculdade\Master\1A2S\PADI\PADI\PADIMapNoReduce\PuppetMaster\obj\Debug\PuppetMaster.csproj.GenerateResource.Cache
 C:\Users\Tiago\Documents\Faculdade\Master\1A2S\PADI\PADI\PADIMapNoReduce\PuppetMaster\obj\Debug\PuppetMaster.exe
 C:\Users\Tiago\Documents\Faculdade\Master\1A2S\PADI\PADI\PADIMapNoReduce\PuppetMaster\obj\Debug\PuppetMaster.pdb
+Z:\Documents\GitHub\PADI-master\PADIMapNoReduce\PuppetMaster\bin\Debug\PuppetMaster.exe.config
+Z:\Documents\GitHub\PADI-master\PADIMapNoReduce\PuppetMaster\obj\Debug\PuppetMaster.exe
+Z:\Documents\GitHub\PADI-master\PADIMapNoReduce\PuppetMaster\obj\Debug\PuppetMaster.pdb

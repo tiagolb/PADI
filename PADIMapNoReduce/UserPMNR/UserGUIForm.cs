@@ -30,6 +30,7 @@ namespace UserPMNR
         {
             bt_entryURL.Enabled = false;
             tb_entryURL.ReadOnly = true;
+            bt_submitJob.Enabled = true;
         }
 
         private void bt_dllFile_Click(object sender, EventArgs e)

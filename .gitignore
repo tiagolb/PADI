@@ -199,3 +199,4 @@ FakesAssemblies/
 *.opt
 
 PADIMapNoReduce/PuppetMaster/obj/Debug/PuppetMaster.csproj.FileListAbsolute.txt
+*.suo

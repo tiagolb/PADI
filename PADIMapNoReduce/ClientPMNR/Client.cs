@@ -10,26 +10,48 @@ using System.Runtime.Remoting.Channels.Tcp;
 using System.Runtime.Remoting.Channels.ChannelServices;
 
 
-namespace ClientPMNR
-{
-    public class Client
-    {
+namespace ClientPMNR {
+    public class Client {
+
 
         private Worker worker;
+        private TcpChannel channel;
 
-        public void INIT(String entryURL) {
+        public void INIT(string entryURL) {
 
             worker = (Worker)Activator.GetObject(typeof(Worker), entryURL);
 
-            TcpChannel channel = new TcpChannel(8086);
+            channel = new TcpChannel(8086);
             ChannelServices.RegisterChannel(channel, true);
+            RemotingConfiguration.RegisterWellKnownServiceType(typeof(RemoteClient), "Client", WellKnownObjectMode.SingleCall);
 
         }
 
-        public bool SUBMIT(String inputFilePath, int numberSplits, String outputFolderPath, String dllFilePath) {
-            
+        public bool SUBMIT(string inputFilePath, int numberSplits, string outputFolderPath, string dllFilePath) {
+
 
             return true;
         }
+ 
     }
+
+    public class RemoteClient : MarshalByRefObject{
+
+        IList<IList<KeyValuePair<string, string>>> processedSplits;
+
+        public RemoteClient() {
+            this.processedSplits = new List<IList<KeyValuePair<string, string>>>();
+        }
+
+        public IList<KeyValuePair<string, string>> getSplit(int begin, int end) {
+            IList<KeyValuePair<string, string>> result = new List<KeyValuePair<string, string>>();
+
+            return result;
+        }
+
+        public void sendProcessedSplit(IList<KeyValuePair<string, string>> result) {
+            processedSplits.Add(result);
+        }
+    }
+
 }

@@ -189,6 +189,7 @@
             // 
             // bt_submitJob
             // 
+            this.bt_submitJob.Enabled = false;
             this.bt_submitJob.Location = new System.Drawing.Point(309, 517);
             this.bt_submitJob.Name = "bt_submitJob";
             this.bt_submitJob.Size = new System.Drawing.Size(150, 23);

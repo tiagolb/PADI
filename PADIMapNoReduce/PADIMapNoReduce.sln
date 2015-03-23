@@ -1,7 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Express 2012 for Windows Desktop
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PuppetMaster", "PuppetMaster\PuppetMaster.csproj", "{6A9B8C58-B09A-489F-AD97-003F08398C46}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserPMNR", "UserPMNR\UserPMNR.csproj", "{78A82A00-A8B6-48AA-A07D-E33A1516E427}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,6 +15,10 @@ Global
 		{6A9B8C58-B09A-489F-AD97-003F08398C46}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6A9B8C58-B09A-489F-AD97-003F08398C46}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6A9B8C58-B09A-489F-AD97-003F08398C46}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78A82A00-A8B6-48AA-A07D-E33A1516E427}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78A82A00-A8B6-48AA-A07D-E33A1516E427}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78A82A00-A8B6-48AA-A07D-E33A1516E427}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78A82A00-A8B6-48AA-A07D-E33A1516E427}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

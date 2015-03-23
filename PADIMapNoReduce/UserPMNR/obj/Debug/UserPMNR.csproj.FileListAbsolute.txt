@@ -1,0 +1,8 @@
+Z:\Documents\GitHub\PADI-master\PADIMapNoReduce\UserPMNR\bin\Debug\UserPMNR.exe.config
+Z:\Documents\GitHub\PADI-master\PADIMapNoReduce\UserPMNR\bin\Debug\UserPMNR.exe
+Z:\Documents\GitHub\PADI-master\PADIMapNoReduce\UserPMNR\bin\Debug\UserPMNR.pdb
+Z:\Documents\GitHub\PADI-master\PADIMapNoReduce\UserPMNR\obj\Debug\UserPMNR.UserGUIForm.resources
+Z:\Documents\GitHub\PADI-master\PADIMapNoReduce\UserPMNR\obj\Debug\UserPMNR.Properties.Resources.resources
+Z:\Documents\GitHub\PADI-master\PADIMapNoReduce\UserPMNR\obj\Debug\UserPMNR.csproj.GenerateResource.Cache
+Z:\Documents\GitHub\PADI-master\PADIMapNoReduce\UserPMNR\obj\Debug\UserPMNR.exe
+Z:\Documents\GitHub\PADI-master\PADIMapNoReduce\UserPMNR\obj\Debug\UserPMNR.pdb

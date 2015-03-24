@@ -8,7 +8,6 @@ using WorkerPMNR;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
-using System.Runtime.Remoting.Channels.ChannelServices;
 
 
 namespace ClientPMNR {
@@ -22,22 +21,17 @@ namespace ClientPMNR {
 
             worker = (RemoteWorker)Activator.GetObject(typeof(RemoteWorker), entryURL);
 
-            channel = new TcpChannel(8086);
-            ChannelServices.RegisterChannel(channel, true);
-            RemotingConfiguration.RegisterWellKnownServiceType(typeof(RemoteClient), "Client", WellKnownObjectMode.SingleCall);
+            //channel = new TcpChannel(8086);
+            //ChannelServices.RegisterChannel(channel, true);
+            //RemotingConfiguration.RegisterWellKnownServiceType(typeof(RemoteClient), "Client", WellKnownObjectMode.SingleCall);
 
         }
 
-        public bool SUBMIT(string inputFilePath, int numberSplits, string outputFolderPath, string dllFilePath, string className) {
-            
-            byte[] code = File.ReadAllBytes(dllFilePath);
-            try {
-                worker.SendMapper(code, className);
-            }
-            catch (Exception) {
-                Console.WriteLine("Mapeamento falhou.");
-            }
-            return true;
+        public int SUBMIT(string inputFilePath, int numberSplits, string outputFolderPath, string dllFilePath, string className) {
+            byte[] file = File.ReadAllBytes(inputFilePath);
+            int fileSizeBytes = file.Length;
+            //worker.JobMetaData(numberSplits, fileSizeBytes);
+            return fileSizeBytes;
         }
  
     }

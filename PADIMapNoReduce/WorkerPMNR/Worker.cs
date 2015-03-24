@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
-using System.Runtime.Remoting.Channels.ChannelServices;
 using System.Reflection;
 
 
@@ -21,10 +20,13 @@ namespace WorkerPMNR {
             channel = new TcpChannel(port);
             ChannelServices.RegisterChannel(channel, true);
             RemotingConfiguration.RegisterWellKnownServiceType(typeof(RemoteWorker), "Worker", WellKnownObjectMode.Singleton);
+            Console.WriteLine("<enter> para sair...");
+            Console.ReadLine();
         }
 
         static void Main(string[] args) {
 
+            Console.Write("Enter port here: ");
             int port = Int32.Parse(Console.ReadLine());
             Worker worker = new Worker(port);
         }
@@ -32,6 +34,10 @@ namespace WorkerPMNR {
     }
 
     public class RemoteWorker : MarshalByRefObject {
+
+        public void JobMetaData(int numberSplits, int fileSizeBytes) {
+            //Console.WriteLine("Bytes in File: {0}", fileSizeBytes);
+        }
 
         public bool SendMapper(byte[] code, string className) {
             Assembly assembly = Assembly.Load(code);

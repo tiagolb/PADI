@@ -8,19 +8,21 @@ using WorkerPMNR;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
+using InterfacePMNR;
 
 
 namespace ClientPMNR {
     public class Client {
 
 
-        private RemoteWorker worker;
+        private RemoteWorker remoteWorker;
         private TcpChannel channel;
+        private string url = "tcp://localhost:8086/Client";
 
         public void INIT(string entryURL) {
 
-            worker = (RemoteWorker)Activator.GetObject(typeof(RemoteWorker), entryURL);
-
+            remoteWorker = (RemoteWorker)Activator.GetObject(typeof(RemoteWorker), entryURL);
+            remoteWorker.setClientURL(url);
             //channel = new TcpChannel(8086);
             //ChannelServices.RegisterChannel(channel, true);
             //RemotingConfiguration.RegisterWellKnownServiceType(typeof(RemoteClient), "Client", WellKnownObjectMode.SingleCall);
@@ -30,13 +32,13 @@ namespace ClientPMNR {
         public int SUBMIT(string inputFilePath, int numberSplits, string outputFolderPath, string dllFilePath, string className) {
             byte[] file = File.ReadAllBytes(inputFilePath);
             int fileSizeBytes = file.Length;
-            //worker.JobMetaData(numberSplits, fileSizeBytes);
+            //worker.JobMetaData(numberSplits, fileSizeBytes, byte[] code, String class_name);
             return fileSizeBytes;
         }
  
     }
 
-    public class RemoteClient : MarshalByRefObject{
+    public class RemoteClient : MarshalByRefObject, RemoteClientInterface{
 
         IList<IList<KeyValuePair<string, string>>> processedSplits;
 
@@ -44,8 +46,9 @@ namespace ClientPMNR {
             this.processedSplits = new List<IList<KeyValuePair<string, string>>>();
         }
 
-        public IList<KeyValuePair<string, string>> getSplit(int begin, int end) {
-            IList<KeyValuePair<string, string>> result = new List<KeyValuePair<string, string>>();
+
+        public IList<string> getSplit(int begin, int end) {
+            IList<string> result = new List<string>();
 
             return result;
         }

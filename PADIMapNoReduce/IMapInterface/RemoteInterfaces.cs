@@ -17,6 +17,7 @@ namespace InterfacePMNR {
         void JoinBroadcast(int stopID, int previousNodeID);
         //void RemoveBroadcast();
         void SetNextNodeURL(string workerURL);
+        void SetCurrentNextNodeURL(string url);
         void SetClientURL(string clientURL);
     }
 }

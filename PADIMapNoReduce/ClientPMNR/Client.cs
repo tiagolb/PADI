@@ -22,7 +22,7 @@ namespace ClientPMNR {
         public void INIT(string entryURL) {
 
             remoteWorker = (RemoteWorker)Activator.GetObject(typeof(RemoteWorker), entryURL);
-            remoteWorker.setClientURL(url);
+            remoteWorker.SetClientURL(url);
             //channel = new TcpChannel(8086);
             //ChannelServices.RegisterChannel(channel, true);
             //RemotingConfiguration.RegisterWellKnownServiceType(typeof(RemoteClient), "Client", WellKnownObjectMode.SingleCall);

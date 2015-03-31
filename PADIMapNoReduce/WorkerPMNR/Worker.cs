@@ -18,12 +18,16 @@ namespace WorkerPMNR {
         static void Main(string[] args) {
             Console.Write("Enter port here: ");
             int port = Int32.Parse(Console.ReadLine());
-
+            string newNodeURL = "tcp://localhost:" + port + "/Worker";
 
             TcpChannel channel = new TcpChannel(port);
             ChannelServices.RegisterChannel(channel, true);
-            RemoteWorker remoteWorker = new RemoteWorker();
+            RemoteWorker remoteWorker = new RemoteWorker(port);
             RemotingServices.Marshal(remoteWorker, "Worker", typeof(RemoteWorker));
+            Console.WriteLine("Insert entry point port");
+            string entryPointURL = Console.ReadLine();
+            if (entryPointURL != "")
+                remoteWorker.ConnectToChain("tcp://localhost:"+entryPointURL+"/Worker", newNodeURL);
             Console.WriteLine("<enter> para sair...");
             Console.ReadLine();
         }
@@ -43,22 +47,22 @@ namespace WorkerPMNR {
                     if (type.FullName.EndsWith("." + className)) {
                         // create an instance of the object
                         this.type = type;
-                        this.classObj = (IMapper) Activator.CreateInstance(type);
+                        this.classObj = (IMapper)Activator.CreateInstance(type);
                     }
                 }
             }
         }
 
-        public IList<KeyValuePair<string, string>> processSplit(IList<string> split){
+        public IList<KeyValuePair<string, string>> processSplit(IList<string> split) {
             IList<KeyValuePair<string, string>> result = new List<KeyValuePair<string, string>>();
-            
-            foreach(string s in split)
+
+            foreach (string s in split)
                 result.Concat(processLine(s));
 
             return result;
         }
 
-        private IList<KeyValuePair<string, string>> processLine(string fileLine){
+        private IList<KeyValuePair<string, string>> processLine(string fileLine) {
             object[] args = new object[] { fileLine };
             object resultObject = type.InvokeMember("Map",
                    BindingFlags.Default | BindingFlags.InvokeMethod,
@@ -71,7 +75,7 @@ namespace WorkerPMNR {
 
 
     public class RemoteWorker : MarshalByRefObject, RemoteWorkerInterface {
-        private string url;
+        private string url;   //TODO Get real machine IP
         private int totalNodes;
         private int id;
         private int linesPerMachine;
@@ -79,17 +83,30 @@ namespace WorkerPMNR {
         private Worker worker;
         private RemoteWorkerInterface nextNode;
         private RemoteClientInterface client;
+        private string currentNextNodeURL;
 
-
-        public void setClientURL(string url) {
-           client = (RemoteClientInterface)Activator.GetObject(typeof(RemoteClientInterface), url);
+        public RemoteWorker(int port) {
+            this.url = "tcp://localhost:" + port + "/Worker";
+            this.totalNodes = 1;
+            this.currentNextNodeURL = url;
         }
 
+        public void SetClientURL(string clientURL) {
+            client = (RemoteClientInterface)Activator.GetObject(typeof(RemoteClientInterface), url);
+        }
+
+        public void SetNextNodeURL(string workerURL) {
+            nextNode = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), workerURL);
+        }
+
+        private int mod(int x, int m) {
+            return (x % m + m) % m;
+        }
 
         public void Broadcast(int remainingLines, int linesPerMachine, int linesPerSplit, byte[] code, string className) {
-             IList<IList<string>> splits = new List<IList<string>>();
-             IList<KeyValuePair<string, string>> splitProcessingResult;
-            int begin = id*linesPerMachine;
+            IList<IList<string>> splits = new List<IList<string>>();
+            IList<KeyValuePair<string, string>> splitProcessingResult;
+            int begin = id * linesPerMachine;
             remainingLines -= linesPerMachine;
 
             if (remainingLines > 0)
@@ -115,36 +132,60 @@ namespace WorkerPMNR {
 
         } //TODO: Test TAKE -- is worker.processSplit blocking the RemoteWorker? 
 
-
-
         public void JobMetaData(int numberSplits, int numLines, byte[] code, string className) {
             worker = new Worker(code, className);
-           int linesPerMachine = numLines/totalNodes;
-           int linesPerSplit = numLines/numberSplits;
+            int linesPerMachine = numLines / totalNodes;
+            int linesPerSplit = numLines / numberSplits;
+
+            //Broadcast(numLines, linesPerMachine, linesPerSplit, code, className);
+        }
+
+        public void ConnectToChain(string url, string newNodeURL) {
+            //TODO: Connect() to entry point
+            //      set own worker reference as next in chain
+            RemoteWorkerInterface remoteWorkerConnector =
+                (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), url);
+            int[] connectionData = remoteWorkerConnector.Connect(newNodeURL);
+            this.id = connectionData[0];
+            this.totalNodes = connectionData[1];
+            Console.WriteLine("ConnectedToChain, ID:" + this.id + ", TotalNodes:" + this.totalNodes);
+
+        }
+
+        public int[] Connect(string workerURL) {
+            Console.WriteLine("<CONNECT>");
+            bool nextExists = nextNode != null;
             
-           Broadcast(numLines, linesPerMachine, linesPerSplit, code, className);
+            this.totalNodes++;
+            if (nextExists) {
+                Console.WriteLine("<CONNECT_IF>");
+                int cena = mod((id - 1), totalNodes);
+                Console.WriteLine("STOP ID:" + cena + " workURL: " + workerURL);
+                nextNode.JoinBroadcast(cena, this.id+1); // antique
+                Console.WriteLine("</CONNECT_IF>");
+            }
+
+            nextNode = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), workerURL);
+            nextNode.SetNextNodeURL(currentNextNodeURL);
+            currentNextNodeURL = workerURL;
+
+            Console.WriteLine("NextNode: " + currentNextNodeURL);
+            Console.WriteLine("Connect: ID:" + this.id + ", TotalNodes:" + this.totalNodes);
+
+            Console.WriteLine("</CONNECT>");
+            return new int[] { id + 1, totalNodes };
         }
 
+        public void JoinBroadcast(int stopID, int previousNodeID) {
+            Console.WriteLine("<JOIN_BROADCAST>");
+            totalNodes++;
+            Console.WriteLine("JoinBroadcast, stopID:" + stopID + " totalNodes: "+ totalNodes + " this.id: "+this.id);
+            this.id = mod((previousNodeID + 1), totalNodes);
 
-        public void connectToChain() {
-        //TODO: Connect() to entry point
-        //      set own worker reference as next in chain
-
-        }
-
-
-        public int Connect(string workerURL) {
-            if(nextNode != null)
-                nextNode.JoinBroadcast(id);
-
-            worker = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), workerURL);
-            return id++;
-        }
-
-        public void JoinBroadcast(int id){
-            if(id != this.id)
-                nextNode.JoinBroadcast(id);
-            //this.id++ ??
+            if (stopID != this.id) {
+                nextNode.JoinBroadcast(stopID, this.id);
+            }
+            Console.WriteLine("<JOIN_BROADCAST>");
         }
     }
 

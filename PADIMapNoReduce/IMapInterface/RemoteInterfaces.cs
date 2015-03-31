@@ -5,16 +5,18 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace InterfacePMNR {
-    interface RemoteClientInterface {
-        public IList<KeyValuePair<string, string>> getSplit(int begin, int end);
-        public void sendProcessedSplit(IList<KeyValuePair<string, string>> result);
+    public interface RemoteClientInterface {
+       IList<string> getSplit(int begin, int end);
+       void sendProcessedSplit(IList<KeyValuePair<string, string>> result);
     }
 
-    interface RemoteWorkerInterface {
-        public void JobMetaData(int numberSplits, int numLines, byte[] code, string className);
-        public void Broadcast(int remainingLines, int linesPerMachine, int linesPerSplit, byte[] code, string className);
-        public int Connect(string workerURL);
-        public void JoinBroadcast(int id);
-        public void RemoveBroadcast();
+    public interface RemoteWorkerInterface {
+        void JobMetaData(int numberSplits, int numLines, byte[] code, string className);
+        void Broadcast(int remainingLines, int linesPerMachine, int linesPerSplit, byte[] code, string className);
+        int[] Connect(string workerURL);
+        void JoinBroadcast(int stopID, int previousNodeID);
+        //void RemoveBroadcast();
+        void SetNextNodeURL(string workerURL);
+        void SetClientURL(string clientURL);
     }
 }

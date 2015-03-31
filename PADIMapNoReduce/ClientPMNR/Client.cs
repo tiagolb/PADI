@@ -32,7 +32,9 @@ namespace ClientPMNR {
         public int SUBMIT(string inputFilePath, int numberSplits, string outputFolderPath, string dllFilePath, string className) {
             byte[] file = File.ReadAllBytes(inputFilePath);
             int fileSizeBytes = file.Length;
-            //worker.JobMetaData(numberSplits, fileSizeBytes, byte[] code, String class_name);
+            byte[] dllCode = File.ReadAllBytes(dllFilePath);
+
+            remoteWorker.JobMetaData(numberSplits, fileSizeBytes, dllCode, className);
             return fileSizeBytes;
         }
  

@@ -82,7 +82,7 @@ namespace WorkerPMNR {
 
 
     public class RemoteWorker : MarshalByRefObject, RemoteWorkerInterface {
-        private string url;   //TODO Get real machine IP
+        private string url;
         private int totalNodes;
         private int id;
         private int linesPerMachine;
@@ -96,7 +96,7 @@ namespace WorkerPMNR {
             string host =  "" + Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
             this.url = "tcp://" + host+":" + port + "/Worker";
             this.totalNodes = 1;
-            this.nextNodeURL = url;
+            this.nextNodeURL = this.url;
         }
 
         public void SetCurrentNextNodeURL(string url) {
@@ -114,6 +114,8 @@ namespace WorkerPMNR {
         private int mod(int x, int m) {
             return (x % m + m) % m;
         }
+
+
 
         public void Broadcast(int remainingLines, int linesPerMachine, int linesPerSplit, byte[] code, string className) {
             IList<IList<string>> splits = new List<IList<string>>();
@@ -144,13 +146,18 @@ namespace WorkerPMNR {
 
         } //TODO: Test TAKE -- is worker.processSplit blocking the RemoteWorker? 
 
+
+
+
         public void JobMetaData(int numberSplits, int numLines, byte[] code, string className) {
             worker = new Worker(code, className);
             int linesPerMachine = numLines / totalNodes;
             int linesPerSplit = numLines / numberSplits;
 
-            //Broadcast(numLines, linesPerMachine, linesPerSplit, code, className);
+            Broadcast(numLines, linesPerMachine, linesPerSplit, code, className);
         }
+
+
 
         public void ConnectToChain(string entryPointURL, string newNodeURL) {
             RemoteWorkerInterface remoteWorkerConnector =
@@ -161,6 +168,8 @@ namespace WorkerPMNR {
             this.totalNodes = connectionData[1];
             //Console.WriteLine("ID: " + this.id + " totalNodes: " + this.totalNodes);
         }
+
+
 
         public int[] Connect(string workerURL) {
             this.totalNodes++;
@@ -180,6 +189,8 @@ namespace WorkerPMNR {
             //Returns to the new Node it's ID and Total Nodes in the ring
             return new int[] { id + 1, totalNodes };
         }
+
+
 
         public void JoinBroadcast(int stopID, int previousNodeID) {
             //The node receiving the broadcast updates the number of Total Nodes in the System

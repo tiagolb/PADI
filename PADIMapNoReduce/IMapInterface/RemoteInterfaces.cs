@@ -20,4 +20,8 @@ namespace InterfacePMNR {
         void SetCurrentNextNodeURL(string url);
         void SetClientURL(string clientURL);
     }
+
+    public interface RemotePuppetMasterInterface {
+        void CreateWorker(int id, string serviceURL, string entryURL);
+    }
 }

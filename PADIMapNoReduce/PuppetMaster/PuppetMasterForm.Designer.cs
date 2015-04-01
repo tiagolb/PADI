@@ -1,4 +1,4 @@
-﻿namespace PuppetMaster {
+﻿namespace PuppetMasterPMNR {
     partial class PuppetMasterForm {
         /// <summary>
         /// Required designer variable.

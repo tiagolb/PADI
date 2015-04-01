@@ -7,9 +7,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using PuppetMasterPMNR;
 
-namespace PuppetMaster {
+
+namespace PuppetMasterPMNR {
     public partial class PuppetMasterForm : Form {
+
+        PuppetMaster puppetMaster;
+
         public PuppetMasterForm() {
             InitializeComponent();
         }

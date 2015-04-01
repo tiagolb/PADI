@@ -24,6 +24,19 @@ namespace UserPMNR {
             InitializeComponent();
         }
 
+        /*
+        public UserGUIForm(string entryURL, string filePath, string outputFolderPath, string nSplits, string dllFilePath, string mapClassName) {
+            InitializeComponent();
+            this._inputFilePath = filePath;
+            this._outputFolderPath = outputFolderPath;
+            this._dllFilePath = dllFilePath;
+            this._mapClassName = mapClassName;
+            this._numberSplits = Int32.Parse(nSplits);
+            this._client = new Client();
+            this._client.INIT(entryURL);
+            this._client.SUBMIT(_inputFilePath, _numberSplits, _outputFolderPath, _dllFilePath, _mapClassName);
+        }
+        */
 
         private void bt_entryURL_Click(object sender, EventArgs e) {
             string entryURL = tb_entryURL.Text;

@@ -60,12 +60,26 @@ namespace WorkerPMNR {
             }
         }
 
-        public IList<KeyValuePair<string, string>> processSplit(IList<string> split) {
+        public IList<KeyValuePair<string, string>> processSplit(string split) {
             IList<KeyValuePair<string, string>> result = new List<KeyValuePair<string, string>>();
+            int index;
+            int newLineSize = Environment.NewLine.Length;
+            IList<string> lines = new List<string>();
+            while (split.Length > 0) {
+                index = split.IndexOf(Environment.NewLine);
+                if (index > 0) {
+                    lines.Add(split.Substring(0, index));
+                    split = split.Substring(index + newLineSize);
+                }
+                else {
+                    lines.Add(split);
+                    split = "";
+                }
+            }
 
-            foreach (string s in split)
-                result.Concat(processLine(s));
-
+            foreach (string line in lines) {
+                result.Concat(processLine(line));
+            }
             return result;
         }
 
@@ -115,22 +129,89 @@ namespace WorkerPMNR {
             return (x % m + m) % m;
         }
 
+        private IList<string> getLinesFromBytes(byte[] bytes, int bytesPerSplit, bool first) {
+            IList<string> lines = new List<string>();
+            string splitsString = System.Text.Encoding.ASCII.GetString(bytes);
+            int beginPos;
+            int lengthOfSplit;
+            string split;
+            int newLineSize = Environment.NewLine.Length;
+
+            if (first) {
+                beginPos = 0;
+            }
+            else {
+                beginPos = splitsString.IndexOf(Environment.NewLine);
+            }
+            int length = splitsString.Length;
+            while (length > 0) {
+                // Stop condition
+                if (length < bytesPerSplit) {
+                    lines.Add(splitsString);
+                    return lines;
+                }
+
+                // new line after end of split
+                lengthOfSplit = splitsString.IndexOf(Environment.NewLine, bytesPerSplit);
+
+                if (lengthOfSplit > 0) {
+                    split = splitsString.Substring(0, lengthOfSplit);
+                    lengthOfSplit += newLineSize;
+                    splitsString = splitsString.Substring(lengthOfSplit);
+                }
+                else {
+                    // Last line
+                    split = splitsString.Substring(0);
+                    splitsString = "";
+                }
+                lines.Add(split);
+
+                length = splitsString.Length;
+            }
+            return lines;
+        }
+
+        public void Broadcast(int remainingBytes, int bytesPerMachine, int bytesPerSplit, byte[] code, string className) {
+            int begin = id * bytesPerMachine;
+            bool first = id == 0;
+            
+            // We want to request all our lines plus the next split
+            int bytesToRequest = bytesPerMachine + bytesPerSplit;
+
+            if (remainingBytes < bytesToRequest) {
+                bytesToRequest = remainingBytes;
+            }
+            else {
+                remainingBytes -= bytesPerMachine;
+                nextNode.Broadcast(remainingBytes, bytesPerMachine, bytesPerSplit, code, className);
+            }
+            int end = begin + bytesToRequest;
+
+            byte[] bytes = client.getSplit(begin, end);
+
+            IList<string> splits = getLinesFromBytes(bytes, bytesPerSplit, first);
+
+            foreach (string s in splits) {
+                worker.processSplit(s);
+            }
 
 
-        public void Broadcast(int remainingLines, int linesPerMachine, int linesPerSplit, byte[] code, string className) {
-            IList<IList<string>> splits = new List<IList<string>>();
+            /*IList<IList<string>> splits = new List<IList<string>>();
             IList<KeyValuePair<string, string>> splitProcessingResult;
             int begin = id * linesPerMachine;
             remainingLines -= linesPerMachine;
 
-            if (remainingLines > 0)
+            if (remainingLines > 0) {
                 nextNode.Broadcast(remainingLines, linesPerMachine, linesPerSplit, code, className);
+                linesPerMachine += linesPerSplit;
+            }
             else
-                linesPerMachine += remainingLines;
+                linesPerMachine = remainingLines;
 
             int end = begin + linesPerMachine;
 
-            IList<string> split = client.getSplit(begin, end);
+            //IList<string> split = client.getSplit(begin, end);
+            byte[] split = client.getSplit(begin, end);
 
             while (split.Count != 0) {
                 if (split.Count < linesPerSplit)
@@ -142,7 +223,7 @@ namespace WorkerPMNR {
             foreach (IList<string> s in splits) {
                 splitProcessingResult = worker.processSplit(split);
                 client.sendProcessedSplit(splitProcessingResult);
-            }
+            }*/
 
         } //TODO: Test TAKE -- is worker.processSplit blocking the RemoteWorker? 
 

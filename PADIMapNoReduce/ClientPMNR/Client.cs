@@ -49,10 +49,18 @@ namespace ClientPMNR {
         }
 
 
-        public IList<string> getSplit(int begin, int end) {
+        /*public IList<string> getSplit(int begin, int end) {
             IList<string> result = new List<string>();
 
             return result;
+        }*/
+
+        /*
+         * getSplit receives begin and end position of the file byte array
+         * return byte array from begin to end
+         */
+        public byte[] getSplit(int begin, int end) {
+            return new byte[]{};
         }
 
         public void sendProcessedSplit(IList<KeyValuePair<string, string>> result) {

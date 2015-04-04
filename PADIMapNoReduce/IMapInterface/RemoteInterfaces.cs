@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace InterfacePMNR {
     public interface RemoteClientInterface {
-       IList<string> getSplit(int begin, int end);
+       //IList<string> getSplit(int begin, int end);
+        byte[] getSplit(int begin, int end);
        void sendProcessedSplit(IList<KeyValuePair<string, string>> result);
     }
 

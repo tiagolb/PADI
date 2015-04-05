@@ -8,7 +8,8 @@ namespace InterfacePMNR {
     public interface RemoteClientInterface {
        //IList<string> getSplit(int begin, int end);
         byte[] getSplit(int begin, int end);
-       void sendProcessedSplit(IList<KeyValuePair<string, string>> result);
+        //void sendProcessedSplit(IList<KeyValuePair<string, string>> result, int splitId);
+        void sendProcessedSplit(string result, int splitId);
     }
 
     public interface RemoteWorkerInterface {
@@ -20,6 +21,7 @@ namespace InterfacePMNR {
         void SetNextNodeURL(string workerURL);
         void SetCurrentNextNodeURL(string url);
         void SetClientURL(string clientURL);
+        void BroadcastClient(int stopId, string clientURL);
     }
 
     public interface RemotePuppetMasterInterface {

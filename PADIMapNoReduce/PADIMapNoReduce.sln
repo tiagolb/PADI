@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio Express 2012 for Windows Desktop
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PuppetMaster", "PuppetMaster\PuppetMaster.csproj", "{6A9B8C58-B09A-489F-AD97-003F08398C46}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserPMNR", "UserPMNR\UserPMNR.csproj", "{78A82A00-A8B6-48AA-A07D-E33A1516E427}"
@@ -10,6 +10,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkerPMNR", "WorkerPMNR\WorkerPMNR.csproj", "{75E76B65-1FA7-469C-A817-82052C18C3A3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interfaces", "IMapInterface\Interfaces.csproj", "{90F62D73-F20C-4E6B-9AB4-39BF08397210}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teste", "Teste\Teste.csproj", "{AD02D309-2BC7-4481-AB20-357F2EE9DB38}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibMapper", "LibMapper\LibMapper.csproj", "{483057AD-1A1C-44E9-B81A-84B68935A8D4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,6 +41,14 @@ Global
 		{90F62D73-F20C-4E6B-9AB4-39BF08397210}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{90F62D73-F20C-4E6B-9AB4-39BF08397210}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{90F62D73-F20C-4E6B-9AB4-39BF08397210}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD02D309-2BC7-4481-AB20-357F2EE9DB38}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD02D309-2BC7-4481-AB20-357F2EE9DB38}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD02D309-2BC7-4481-AB20-357F2EE9DB38}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD02D309-2BC7-4481-AB20-357F2EE9DB38}.Release|Any CPU.Build.0 = Release|Any CPU
+		{483057AD-1A1C-44E9-B81A-84B68935A8D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{483057AD-1A1C-44E9-B81A-84B68935A8D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{483057AD-1A1C-44E9-B81A-84B68935A8D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{483057AD-1A1C-44E9-B81A-84B68935A8D4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

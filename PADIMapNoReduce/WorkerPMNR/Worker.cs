@@ -19,22 +19,23 @@ namespace WorkerPMNR {
 
         static void Main(string[] args) {
             string host = "" + Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
-
+            //string host = "localhost";
             Console.Write("Enter port here: ");
             int port = Int32.Parse(Console.ReadLine());
             string newNodeURL = "tcp://" + host + ":" + port + "/Worker";
+            Console.WriteLine(newNodeURL);
 
             TcpChannel channel = new TcpChannel(port);
-            ChannelServices.RegisterChannel(channel, true);
+            ChannelServices.RegisterChannel(channel, false);
             RemoteWorker remoteWorker = new RemoteWorker(port);
-            RemotingServices.Marshal(remoteWorker, "Worker", typeof(RemoteWorker));
+            RemotingServices.Marshal(remoteWorker, "Worker", typeof(RemoteWorkerInterface));
 
             Console.WriteLine("Insert entry point port");
             string entryPointURL = Console.ReadLine();
 
             if (entryPointURL != "")
-                remoteWorker.ConnectToChain("tcp://"+host+":"+entryPointURL+"/Worker", newNodeURL);
-           
+                remoteWorker.ConnectToChain("tcp://" + host + ":" + entryPointURL + "/Worker", newNodeURL);
+
             Console.WriteLine("<enter> para sair...");
             Console.ReadLine();
         }
@@ -44,7 +45,7 @@ namespace WorkerPMNR {
     public class Worker {
         private Type type;
         private IMapper classObj;
-        private string[] split;
+        //private string[] split;
 
         public Worker(byte[] code, string className) {
             Assembly assembly = Assembly.Load(code);
@@ -78,7 +79,11 @@ namespace WorkerPMNR {
             }
 
             foreach (string line in lines) {
-                result.Concat(processLine(line));
+                //Console.WriteLine("Line: " + line);
+                /*foreach (KeyValuePair<string, string> pair in processLine(line)) {
+                    Console.WriteLine("Pro Line: " + pair.Key + " " + pair.Value);
+                }*/
+                result = result.Concat(processLine(line)).ToList();
             }
             return result;
         }
@@ -90,6 +95,10 @@ namespace WorkerPMNR {
                    null,
                    classObj,
                    args);
+            IList<KeyValuePair<string, string>> r = (IList<KeyValuePair<string, string>>)resultObject;
+            /*foreach (KeyValuePair<string, string> pair in r) {
+                Console.WriteLine("Count: " + pair.Key +" " + pair.Value);
+            }*/
             return (IList<KeyValuePair<string, string>>)resultObject;
         }
     }
@@ -99,16 +108,18 @@ namespace WorkerPMNR {
         private string url;
         private int totalNodes;
         private int id;
-        private int linesPerMachine;
-        private int linesPerSplit;
+        //private int linesPerMachine;
+        //private int linesPerSplit;
+        private int numberSplits;
         private Worker worker;
         private RemoteWorkerInterface nextNode;
         private RemoteClientInterface client;
         private string nextNodeURL;
+        private string clientURL;
 
         public RemoteWorker(int port) {
-            string host =  "" + Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
-            this.url = "tcp://" + host+":" + port + "/Worker";
+            string host = "" + Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+            this.url = "tcp://" + host + ":" + port + "/Worker";
             this.totalNodes = 1;
             this.nextNodeURL = this.url;
         }
@@ -118,8 +129,23 @@ namespace WorkerPMNR {
         }
 
         public void SetClientURL(string clientURL) {
-            client = (RemoteClientInterface)Activator.GetObject(typeof(RemoteClientInterface), url);
+            //Console.WriteLine("Entrei");
+            if(nextNode != null) {
+                int stopID = mod((this.id - 1), totalNodes);
+                BroadcastClient(stopID, clientURL);
+            }
+            //client = (RemoteClientInterface)Activator.GetObject(typeof(RemoteClientInterface), clientURL);
         }
+
+        public void BroadcastClient(int stopId, string clientURL) {
+            this.clientURL = clientURL;
+            client = (RemoteClientInterface)Activator.GetObject(typeof(RemoteClientInterface), clientURL);
+            Console.WriteLine("Client: " + clientURL);
+            if (this.id != stopId && nextNode != null) {
+                nextNode.BroadcastClient(stopId, clientURL);
+            }
+        }
+
 
         public void SetNextNodeURL(string workerURL) {
             nextNode = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), workerURL);
@@ -141,8 +167,9 @@ namespace WorkerPMNR {
                 beginPos = 0;
             }
             else {
-                beginPos = splitsString.IndexOf(Environment.NewLine);
+                beginPos = splitsString.IndexOf(Environment.NewLine) + newLineSize;
             }
+            splitsString = splitsString.Substring(beginPos);
             int length = splitsString.Length;
             while (length > 0) {
                 // Stop condition
@@ -172,9 +199,16 @@ namespace WorkerPMNR {
         }
 
         public void Broadcast(int remainingBytes, int bytesPerMachine, int bytesPerSplit, byte[] code, string className) {
+            Console.WriteLine("remainingBytes: "+ remainingBytes+". bytesPerMachine: " + bytesPerMachine + ". BytesPerSplit: " + bytesPerSplit);
             int begin = id * bytesPerMachine;
-            bool first = id == 0;
-            
+            bool first = (id == 0);
+            IList<KeyValuePair<string, string>> processedSplit;
+            int splitsPerMachine = bytesPerMachine / bytesPerSplit;
+            worker = new Worker(code, className);
+
+            //ID of first split, ID starts with 1
+            int firstSplit = id * this.numberSplits + 1;
+
             // We want to request all our lines plus the next split
             int bytesToRequest = bytesPerMachine + bytesPerSplit;
 
@@ -186,52 +220,37 @@ namespace WorkerPMNR {
                 nextNode.Broadcast(remainingBytes, bytesPerMachine, bytesPerSplit, code, className);
             }
             int end = begin + bytesToRequest;
-
+            //Console.WriteLine("Before Client");
             byte[] bytes = client.getSplit(begin, end);
+            //Console.WriteLine("After Client: " + System.Text.Encoding.ASCII.GetString(bytes));
+            //Console.WriteLine("Split: " + System.Text.Encoding.ASCII.GetString(bytes));
 
             IList<string> splits = getLinesFromBytes(bytes, bytesPerSplit, first);
-
-            foreach (string s in splits) {
-                worker.processSplit(s);
+            //Console.WriteLine("BeforeSend");
+            int splitId;
+            string result = "";
+            for (int i = 0; (i < splitsPerMachine && i < splits.Count); i++) {
+                splitId = firstSplit + i;
+                processedSplit = worker.processSplit(splits[i]);
+                //Console.WriteLine(processedSplit.ToString());
+                //Console.WriteLine("Split: " + processedSplit[0].Key + "\r\n" + processedSplit[0].Value + "\r\n");
+                foreach (KeyValuePair<string, string> pair in processedSplit) {
+                    result += pair.Key + Environment.NewLine + pair.Value + Environment.NewLine;
+                }
+                Console.WriteLine("Result: " + result);
+                client.sendProcessedSplit(result, splitId);
+                result = "";
+                //Console.WriteLine("SentSplit " + splitId);
             }
-
-
-            /*IList<IList<string>> splits = new List<IList<string>>();
-            IList<KeyValuePair<string, string>> splitProcessingResult;
-            int begin = id * linesPerMachine;
-            remainingLines -= linesPerMachine;
-
-            if (remainingLines > 0) {
-                nextNode.Broadcast(remainingLines, linesPerMachine, linesPerSplit, code, className);
-                linesPerMachine += linesPerSplit;
-            }
-            else
-                linesPerMachine = remainingLines;
-
-            int end = begin + linesPerMachine;
-
-            //IList<string> split = client.getSplit(begin, end);
-            byte[] split = client.getSplit(begin, end);
-
-            while (split.Count != 0) {
-                if (split.Count < linesPerSplit)
-                    splits.Add(new List<string>(split.Take(split.Count)));
-                else
-                    splits.Add(new List<string>(split.Take(linesPerSplit)));
-            }
-
-            foreach (IList<string> s in splits) {
-                splitProcessingResult = worker.processSplit(split);
-                client.sendProcessedSplit(splitProcessingResult);
-            }*/
-
-        } //TODO: Test TAKE -- is worker.processSplit blocking the RemoteWorker? 
+        }
 
 
 
 
         public void JobMetaData(int numberSplits, int numLines, byte[] code, string className) {
-            worker = new Worker(code, className);
+            Console.WriteLine("JobMetaData");
+            //worker = new Worker(code, className);
+            this.numberSplits = numberSplits;
             int linesPerMachine = numLines / totalNodes;
             int linesPerSplit = numLines / numberSplits;
 
@@ -247,7 +266,7 @@ namespace WorkerPMNR {
             int[] connectionData = remoteWorkerConnector.Connect(newNodeURL);
             this.id = connectionData[0];
             this.totalNodes = connectionData[1];
-            //Console.WriteLine("ID: " + this.id + " totalNodes: " + this.totalNodes);
+            Console.WriteLine("ID: " + this.id + " totalNodes: " + this.totalNodes);
         }
 
 
@@ -255,10 +274,9 @@ namespace WorkerPMNR {
         public int[] Connect(string workerURL) {
             this.totalNodes++;
 
-            if (nextNode != null)
-            {   //Compute the ID of the node that shall stop broadcasting
+            if (nextNode != null) {   //Compute the ID of the node that shall stop broadcasting
                 int stopID = mod((this.id - 1), totalNodes);
-                nextNode.JoinBroadcast(stopID, this.id+1);
+                nextNode.JoinBroadcast(stopID, this.id + 1);
             }
 
             //Update nextNodes references, both for the new node and the entry point node
@@ -266,7 +284,7 @@ namespace WorkerPMNR {
             nextNode.SetNextNodeURL(nextNodeURL);
             nextNode.SetCurrentNextNodeURL(nextNodeURL);
             nextNodeURL = workerURL;
-            //Console.WriteLine("ID: " + this.id + " totalNodes: " + this.totalNodes);
+            Console.WriteLine("ID: " + this.id + " totalNodes: " + this.totalNodes);
             //Returns to the new Node it's ID and Total Nodes in the ring
             return new int[] { id + 1, totalNodes };
         }
@@ -279,7 +297,7 @@ namespace WorkerPMNR {
 
             totalNodes++;
             this.id = mod((previousNodeID + 1), totalNodes);
-            //Console.WriteLine("ID: " + this.id + " totalNodes: " + this.totalNodes);
+            Console.WriteLine("ID: " + this.id + " totalNodes: " + this.totalNodes);
             if (stopID != this.id) {
                 nextNode.JoinBroadcast(stopID, this.id);
             }

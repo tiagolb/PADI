@@ -24,7 +24,7 @@ namespace UserPMNR {
             InitializeComponent();
         }
 
-        /*
+
         public UserGUIForm(string entryURL, string filePath, string outputFolderPath, string nSplits, string dllFilePath, string mapClassName) {
             InitializeComponent();
             this._inputFilePath = filePath;
@@ -36,7 +36,7 @@ namespace UserPMNR {
             this._client.INIT(entryURL);
             this._client.SUBMIT(_inputFilePath, _numberSplits, _outputFolderPath, _dllFilePath, _mapClassName);
         }
-        */
+ 
 
         private void bt_entryURL_Click(object sender, EventArgs e) {
             string entryURL = tb_entryURL.Text;
@@ -80,6 +80,12 @@ namespace UserPMNR {
         }
 
         private void bt_submitJob_Click(object sender, EventArgs e) {
+            _numberSplits = Int32.Parse(tb_splits.Text);
+            _mapClassName = tb_mapClass.Text;
+            lb_bytes.Text += _client.SUBMIT(_inputFilePath, _numberSplits, _outputFolderPath, _dllFilePath, _mapClassName);
+        }
+
+        public void SubmitJob() {
             _numberSplits = Int32.Parse(tb_splits.Text);
             _mapClassName = tb_mapClass.Text;
             lb_bytes.Text += _client.SUBMIT(_inputFilePath, _numberSplits, _outputFolderPath, _dllFilePath, _mapClassName);

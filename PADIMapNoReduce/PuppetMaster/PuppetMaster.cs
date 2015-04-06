@@ -8,10 +8,15 @@ using System.Runtime.Remoting.Channels.Tcp;
 using System.Threading.Tasks;
 using PADIMapNoReduce;
 using InterfacePMNR;
+using UserPMNR;
+using System.Windows.Forms;
 
 namespace PuppetMasterPMNR {
     class PuppetMaster {
 
+        public PuppetMaster() {
+
+        }
 
         public void WORKER(int id, string puppetMasterURL, string serviceURL, string entryURL) { 
             
@@ -19,6 +24,11 @@ namespace PuppetMasterPMNR {
 
         public void SUBMIT(string entryURL, string filePath, string outputFolderPath, string nSplits, string dllFilePath, string mapClassName) { 
             //Creates user application in local node. The application submits the designated job
+            UserGUIForm userGUI = new UserGUIForm(entryURL, filePath, outputFolderPath, nSplits, dllFilePath, mapClassName);
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            //Application.Run(userGUI);
+           // userGUI.SubmitJob();
         }
 
         public void WAIT(int seconds) { 

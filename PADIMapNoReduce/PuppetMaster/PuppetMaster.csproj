@@ -34,6 +34,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Remoting" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -44,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="PuppetMaster.cs" />
     <Compile Include="PuppetMasterForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -76,6 +78,20 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ClientPMNR\ClientPMNR.csproj">
+      <Project>{603e4240-9e5e-4703-9cb6-9f649be0fc88}</Project>
+      <Name>ClientPMNR</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\IMapInterface\Interfaces.csproj">
+      <Project>{90f62d73-f20c-4e6b-9ab4-39bf08397210}</Project>
+      <Name>Interfaces</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WorkerPMNR\WorkerPMNR.csproj">
+      <Project>{75e76b65-1fa7-469c-a817-82052c18c3a3}</Project>
+      <Name>WorkerPMNR</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

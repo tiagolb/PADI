@@ -33,7 +33,7 @@ namespace ClientPMNR {
 
         public int SUBMIT(string inputFilePath, int numberSplits, string outputFolderPath, string dllFilePath, string className) {
             inputFile = inputFilePath;
-            outputFolder = outputFolderPath;
+            outputFolder = outputFolderPath+"/";
             byte[] file = File.ReadAllBytes(inputFilePath);
             int fileSizeBytes = file.Length;
             byte[] dllCode = File.ReadAllBytes(dllFilePath);
@@ -73,6 +73,7 @@ namespace ClientPMNR {
          * sendProcessedSplit receives a processed split from worker
          */
         public void sendProcessedSplit(string result, int splitId) {
+
             File.WriteAllText(Client.outputFolder+splitId+".out", result);
         }
     }

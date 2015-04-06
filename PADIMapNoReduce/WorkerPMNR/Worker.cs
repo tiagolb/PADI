@@ -134,7 +134,7 @@ namespace WorkerPMNR {
                 int stopID = mod((this.id - 1), totalNodes);
                 BroadcastClient(stopID, clientURL);
             }
-            //client = (RemoteClientInterface)Activator.GetObject(typeof(RemoteClientInterface), clientURL);
+            client = (RemoteClientInterface)Activator.GetObject(typeof(RemoteClientInterface), clientURL);
         }
 
         public void BroadcastClient(int stopId, string clientURL) {
@@ -154,6 +154,7 @@ namespace WorkerPMNR {
         private int mod(int x, int m) {
             return (x % m + m) % m;
         }
+
 
         private IList<string> getLinesFromBytes(byte[] bytes, int bytesPerSplit, bool first) {
             IList<string> lines = new List<string>();
@@ -179,7 +180,12 @@ namespace WorkerPMNR {
                 }
 
                 // new line after end of split
-                lengthOfSplit = splitsString.IndexOf(Environment.NewLine, bytesPerSplit);
+                if (bytesPerSplit >= length / 2)  //Heuristic
+                    lengthOfSplit = splitsString.IndexOf(Environment.NewLine, bytesPerSplit - bytesPerSplit / 2);
+                else
+                    lengthOfSplit = splitsString.IndexOf(Environment.NewLine, bytesPerSplit);
+
+                Console.WriteLine("Comprimento do Split: " + lengthOfSplit);
 
                 if (lengthOfSplit > 0) {
                     split = splitsString.Substring(0, lengthOfSplit);
@@ -194,10 +200,60 @@ namespace WorkerPMNR {
                 lines.Add(split);
 
                 length = splitsString.Length;
+                Console.WriteLine("O que falta: " + length);
             }
             return lines;
         }
 
+       /* private IList<string> getLinesFromBytes(byte[] bytes, int bytesPerSplit, bool first) {
+            IList<string> lines = new List<string>();
+            string splitsString = System.Text.Encoding.ASCII.GetString(bytes);
+            int beginPos;
+            int lengthOfSplit;
+            string split;
+            int newLineSize = Environment.NewLine.Length;
+
+            if (first) {
+                beginPos = 0;
+            }
+            else {
+                beginPos = splitsString.IndexOf(Environment.NewLine) + newLineSize;
+            }
+            splitsString = splitsString.Substring(beginPos);
+            int length = splitsString.Length;
+            while (length > 0) {
+                // Stop condition
+                if (length < bytesPerSplit) {
+                    lines.Add(splitsString);
+                    return lines;
+                }
+
+                // new line after end of split
+                if(bytesPerSplit >= length/2)  //Heuristic
+                    lengthOfSplit = splitsString.IndexOf(Environment.NewLine, bytesPerSplit-bytesPerSplit/2);  
+                else
+                    lengthOfSplit = splitsString.IndexOf(Environment.NewLine, bytesPerSplit);
+                
+                Console.WriteLine("Comprimento do Split: " +lengthOfSplit);
+
+                if (lengthOfSplit > 0) {
+                    split = splitsString.Substring(0, lengthOfSplit);
+                    lengthOfSplit += newLineSize;
+                    splitsString = splitsString.Substring(lengthOfSplit);
+                }
+                else {
+                    // Last line
+                    split = splitsString.Substring(0);
+                    splitsString = "";
+                }
+                lines.Add(split);
+
+                length = splitsString.Length;
+                Console.WriteLine("O que falta: " + length);
+            }
+            return lines;
+        }
+        */
         public void Broadcast(int remainingBytes, int bytesPerMachine, int bytesPerSplit, byte[] code, string className) {
             Console.WriteLine("remainingBytes: "+ remainingBytes+". bytesPerMachine: " + bytesPerMachine + ". BytesPerSplit: " + bytesPerSplit);
             int begin = id * bytesPerMachine;
@@ -226,6 +282,7 @@ namespace WorkerPMNR {
             //Console.WriteLine("Split: " + System.Text.Encoding.ASCII.GetString(bytes));
 
             IList<string> splits = getLinesFromBytes(bytes, bytesPerSplit, first);
+            Console.WriteLine(splits.Count);
             //Console.WriteLine("BeforeSend");
             int splitId;
             string result = "";

@@ -11,18 +11,50 @@ using InterfacePMNR;
 using UserPMNR;
 using System.Windows.Forms;
 using System.Threading;
+using WorkerPMNR;
 
 namespace PuppetMasterPMNR {
-    class PuppetMaster {
+    public class PuppetMaster {
 
         private PuppetMasterForm puppetMasterForm;
+        private int lastPort;
+        private IList<KeyValuePair<int, string>> workplace;
+        private IList<string> puppetMasters;
 
         public PuppetMaster(PuppetMasterForm form) {
             this.puppetMasterForm = form;
+            this.puppetMasters = new List<string>();
+            this.workplace = new List<KeyValuePair<int, string>>();
+            this.lastPort = 8090; //Hardcoded port
+
+            TcpChannel channel = new TcpChannel(9000);   //Hardcoded port
+            ChannelServices.RegisterChannel(channel, false);
+            RemotePuppetMaster remotePuppetMaster = new RemotePuppetMaster(this);
+            RemotingServices.Marshal(remotePuppetMaster, "PM", typeof(RemotePuppetMasterInterface));
         }
 
-        public void WORKER(int id, string puppetMasterURL, string serviceURL, string entryURL) { 
-            
+
+        public int GetLastPort() {
+            return lastPort;
+        }
+
+        public void SetLastPort(int lastPort) {
+            this.lastPort = lastPort;
+        }
+
+        public void AddPuppetMaster(string newPuppetMasterURL) {
+            puppetMasters.Add(newPuppetMasterURL);
+        }
+
+        public void AddWorkplace(int workerID, string puppetMasterURL) {
+            workplace.Add(new KeyValuePair<int,string>(workerID, puppetMasterURL));
+        }
+
+        public void WORKER(int id, string puppetMasterURL, string serviceURL, string entryURL) {
+            RemotePuppetMasterInterface remotePuppetMasterConnector =
+                (RemotePuppetMasterInterface)Activator.GetObject(typeof(RemotePuppetMasterInterface), puppetMasterURL);
+
+            remotePuppetMasterConnector.CreateWorker(id, serviceURL, entryURL);
         }
 
         public void SUBMIT(string entryURL, string filePath, string outputFolderPath, string nSplits, string dllFilePath, string mapClassName) { 
@@ -70,7 +102,31 @@ namespace PuppetMasterPMNR {
 
     public class RemotePuppetMaster : MarshalByRefObject, RemotePuppetMasterInterface {
 
+        private PuppetMaster puppetMaster;
+
+        public RemotePuppetMaster(PuppetMaster pm) {
+            this.puppetMaster = pm;
+        }
+
+
         public void CreateWorker(int id, string serviceURL, string entryURL) {
+            TcpChannel channel = new TcpChannel(puppetMaster.GetLastPort()+1);
+            ChannelServices.RegisterChannel(channel, false);
+            RemoteWorker remoteWorker = new RemoteWorker(puppetMaster.GetLastPort()+1);
+            RemotingServices.Marshal(remoteWorker, "W", typeof(RemoteWorkerInterface));
+
+
+        }
+
+
+        public int Connect(string newPuppetMasterURL) {
+            puppetMaster.AddPuppetMaster(newPuppetMasterURL);
+            return puppetMaster.GetLastPort();
+        }
+
+        public void BroadcastNewWorker(int lastPort, int workerID, string puppetMasterURL) {
+            puppetMaster.SetLastPort(lastPort);
+            puppetMaster.AddWorkplace(workerID, puppetMasterURL);
         }
 
     }

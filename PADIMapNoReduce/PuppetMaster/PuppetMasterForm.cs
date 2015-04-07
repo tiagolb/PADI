@@ -12,10 +12,11 @@ using PuppetMasterPMNR;
 namespace PuppetMasterPMNR {
     public partial class PuppetMasterForm : Form {
 
-        PuppetMaster puppetMaster = new PuppetMaster();
+        PuppetMaster puppetMaster;
 
         public PuppetMasterForm() {
             InitializeComponent();
+             puppetMaster = new PuppetMaster(this);
         }
 
         private void bt_script_Click(object sender, EventArgs e) {
@@ -34,15 +35,12 @@ namespace PuppetMasterPMNR {
 
         }
 
-        private void label1_Click(object sender, EventArgs e) {
-
-        }
 
         private void bt_singleCommand_Click(object sender, EventArgs e) {
             char[] delimiter = { ' ' };
 
             string command = tb_singleCommand.Text;
-
+            MessageBox.Show(command);
             string[] words = command.Split(delimiter);
 
             switch (words[0]) {   

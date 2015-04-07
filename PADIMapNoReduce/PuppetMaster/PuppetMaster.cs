@@ -10,12 +10,15 @@ using PADIMapNoReduce;
 using InterfacePMNR;
 using UserPMNR;
 using System.Windows.Forms;
+using System.Threading;
 
 namespace PuppetMasterPMNR {
     class PuppetMaster {
 
-        public PuppetMaster() {
+        private PuppetMasterForm puppetMasterForm;
 
+        public PuppetMaster(PuppetMasterForm form) {
+            this.puppetMasterForm = form;
         }
 
         public void WORKER(int id, string puppetMasterURL, string serviceURL, string entryURL) { 
@@ -24,12 +27,15 @@ namespace PuppetMasterPMNR {
 
         public void SUBMIT(string entryURL, string filePath, string outputFolderPath, string nSplits, string dllFilePath, string mapClassName) { 
             //Creates user application in local node. The application submits the designated job
-            UserGUIForm userGUI = new UserGUIForm(entryURL, filePath, outputFolderPath, nSplits, dllFilePath, mapClassName);
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            //Application.Run(userGUI);
-           // userGUI.SubmitJob();
+            puppetMasterForm.BeginInvoke((Action)delegate {
+                UserGUIForm userGUI = new UserGUIForm(entryURL, filePath, outputFolderPath, nSplits, dllFilePath, mapClassName);
+                userGUI.Show();
+              //  userGUI.SubmitJob();
+            });
+
         }
+
+        
 
         public void WAIT(int seconds) { 
             //PuppetMaster stops its script execution for x seconds

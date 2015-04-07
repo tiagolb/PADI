@@ -115,7 +115,6 @@
             this.lb_singleCommand.Size = new System.Drawing.Size(86, 13);
             this.lb_singleCommand.TabIndex = 10;
             this.lb_singleCommand.Text = "Single Command";
-            this.lb_singleCommand.Click += new System.EventHandler(this.label1_Click);
             // 
             // bt_singleCommand
             // 
@@ -125,6 +124,7 @@
             this.bt_singleCommand.TabIndex = 11;
             this.bt_singleCommand.Text = "Submit Command";
             this.bt_singleCommand.UseVisualStyleBackColor = true;
+            this.bt_singleCommand.Click += new System.EventHandler(this.bt_singleCommand_Click);
             // 
             // PuppetMasterForm
             // 

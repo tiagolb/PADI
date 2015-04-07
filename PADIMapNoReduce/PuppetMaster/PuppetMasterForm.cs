@@ -50,6 +50,10 @@ namespace PuppetMasterPMNR {
         }
 
         private void ProcessCommand(string command) {
+
+            if(command.StartsWith("%"))
+                return;
+
               char[] delimiter = { ' ' };
 
             string[] words = command.Split(delimiter);

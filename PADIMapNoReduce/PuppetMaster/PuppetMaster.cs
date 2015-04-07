@@ -83,12 +83,12 @@ namespace PuppetMasterPMNR {
         }
 
 
-        public void SUBMIT(string entryURL, string filePath, string outputFolderPath, string nSplits, string dllFilePath, string mapClassName) { 
+        public void SUBMIT(string entryURL, string filePath, string outputFolderPath, string nSplits, string mapClassName, string dllFilePath) { 
             //Creates user application in local node. The application submits the designated job
             puppetMasterForm.BeginInvoke((Action)delegate {
-                UserGUIForm userGUI = new UserGUIForm(entryURL, filePath, outputFolderPath, nSplits, dllFilePath, mapClassName);
+                UserGUIForm userGUI = new UserGUIForm(entryURL, filePath, outputFolderPath, nSplits, mapClassName, dllFilePath);
                 userGUI.Show();
-              //  userGUI.SubmitJob();
+                userGUI.SubmitJob();
             });
 
         }

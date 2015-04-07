@@ -25,7 +25,6 @@
         private void InitializeComponent() {
             this.lb_PuppetMasterURL = new System.Windows.Forms.Label();
             this.tb_PuppetMasterURL = new System.Windows.Forms.TextBox();
-            this.bt_PuppetMasterURLSubmit = new System.Windows.Forms.Button();
             this.bt_script = new System.Windows.Forms.Button();
             this.ofd_script = new System.Windows.Forms.OpenFileDialog();
             this.tb_scriptFileName = new System.Windows.Forms.TextBox();
@@ -47,20 +46,11 @@
             // 
             // tb_PuppetMasterURL
             // 
+            this.tb_PuppetMasterURL.Enabled = false;
             this.tb_PuppetMasterURL.Location = new System.Drawing.Point(162, 6);
             this.tb_PuppetMasterURL.Name = "tb_PuppetMasterURL";
             this.tb_PuppetMasterURL.Size = new System.Drawing.Size(489, 20);
             this.tb_PuppetMasterURL.TabIndex = 1;
-            // 
-            // bt_PuppetMasterURLSubmit
-            // 
-            this.bt_PuppetMasterURLSubmit.Location = new System.Drawing.Point(657, 3);
-            this.bt_PuppetMasterURLSubmit.Name = "bt_PuppetMasterURLSubmit";
-            this.bt_PuppetMasterURLSubmit.Size = new System.Drawing.Size(115, 23);
-            this.bt_PuppetMasterURLSubmit.TabIndex = 2;
-            this.bt_PuppetMasterURLSubmit.Text = "Launch Service";
-            this.bt_PuppetMasterURLSubmit.UseVisualStyleBackColor = true;
-            this.bt_PuppetMasterURLSubmit.Click += new System.EventHandler(this.bt_PuppetMasterURLSubmit_Click);
             // 
             // bt_script
             // 
@@ -138,7 +128,6 @@
             this.Controls.Add(this.tb_scriptFileAddress);
             this.Controls.Add(this.tb_scriptFileName);
             this.Controls.Add(this.bt_script);
-            this.Controls.Add(this.bt_PuppetMasterURLSubmit);
             this.Controls.Add(this.tb_PuppetMasterURL);
             this.Controls.Add(this.lb_PuppetMasterURL);
             this.Name = "PuppetMasterForm";
@@ -152,7 +141,6 @@
 
         private System.Windows.Forms.Label lb_PuppetMasterURL;
         private System.Windows.Forms.TextBox tb_PuppetMasterURL;
-        private System.Windows.Forms.Button bt_PuppetMasterURLSubmit;
         private System.Windows.Forms.Button bt_script;
         private System.Windows.Forms.OpenFileDialog ofd_script;
         private System.Windows.Forms.TextBox tb_scriptFileName;

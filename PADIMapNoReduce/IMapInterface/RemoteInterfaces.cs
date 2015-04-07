@@ -22,11 +22,12 @@ namespace InterfacePMNR {
         void SetCurrentNextNodeURL(string url);
         void SetClientURL(string clientURL);
         void BroadcastClient(int stopId, string clientURL);
+        void Slow(int secondsDelay);
     }
 
     public interface RemotePuppetMasterInterface {
         void CreateWorker(int id, string serviceURL, string entryURL);
         int Connect(string newPuppetMasterURL);
-        void BroadcastNewWorker(int lastPort, int workerID, string puppetMasterURL);
+        void ReceiveWorker(int workerID, string serviceURL);
     }
 }

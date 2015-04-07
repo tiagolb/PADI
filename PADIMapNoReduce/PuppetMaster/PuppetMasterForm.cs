@@ -45,7 +45,10 @@ namespace PuppetMasterPMNR {
 
             switch (words[0]) {   
                 case "WORKER":
-                    puppetMaster.WORKER(Int32.Parse(words[1]), words[2], words[3], words[4]);
+                    if(words.Length == 5)
+                        puppetMaster.WORKER(Int32.Parse(words[1]), words[2], words[3], words[4]);
+                    else
+                        puppetMaster.WORKER(Int32.Parse(words[1]), words[2], words[3], "NOENTRYPOINT");
                     return;
                 case "SUBMIT":
                     puppetMaster.SUBMIT(words[1], words[2], words[3], words[4], words[5], words[6]);

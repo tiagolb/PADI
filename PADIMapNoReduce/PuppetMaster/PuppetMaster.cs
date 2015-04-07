@@ -12,50 +12,76 @@ using UserPMNR;
 using System.Windows.Forms;
 using System.Threading;
 using WorkerPMNR;
+using System.Net;
+using System.Net.Sockets;
+using System.Diagnostics;
 
 namespace PuppetMasterPMNR {
     public class PuppetMaster {
 
         private PuppetMasterForm puppetMasterForm;
-        private int lastPort;
+        private int lastWorkerPort; 
         private IList<KeyValuePair<int, string>> workplace;
         private IList<string> puppetMasters;
+        private int port;  //Port where PM is running
+        private RemotePuppetMaster remotePuppetMaster;
 
         public PuppetMaster(PuppetMasterForm form) {
             this.puppetMasterForm = form;
             this.puppetMasters = new List<string>();
             this.workplace = new List<KeyValuePair<int, string>>();
-            this.lastPort = 8090; //Hardcoded port
+            this.lastWorkerPort = 30001; //Hardcoded port
+            this.port = 20001; //Hardcoded port
 
-            TcpChannel channel = new TcpChannel(9000);   //Hardcoded port
+            TcpChannel channel = new TcpChannel(port);   //Hardcoded port
             ChannelServices.RegisterChannel(channel, false);
-            RemotePuppetMaster remotePuppetMaster = new RemotePuppetMaster(this);
+            remotePuppetMaster = new RemotePuppetMaster(this);
             RemotingServices.Marshal(remotePuppetMaster, "PM", typeof(RemotePuppetMasterInterface));
         }
 
 
         public int GetLastPort() {
-            return lastPort;
+            return lastWorkerPort;
+        }
+
+        public string GetURL() {
+            string host = "" + Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+            string url = "tcp://" + host + ":" + 20001 + "/PM";
+            return url;
         }
 
         public void SetLastPort(int lastPort) {
-            this.lastPort = lastPort;
+            this.lastWorkerPort = lastPort;
         }
 
         public void AddPuppetMaster(string newPuppetMasterURL) {
             puppetMasters.Add(newPuppetMasterURL);
         }
 
-        public void AddWorkplace(int workerID, string puppetMasterURL) {
-            workplace.Add(new KeyValuePair<int,string>(workerID, puppetMasterURL));
-        }
 
         public void WORKER(int id, string puppetMasterURL, string serviceURL, string entryURL) {
-            RemotePuppetMasterInterface remotePuppetMasterConnector =
-                (RemotePuppetMasterInterface)Activator.GetObject(typeof(RemotePuppetMasterInterface), puppetMasterURL);
+            if (puppetMasterURL.Equals(GetURL())) {
 
-            remotePuppetMasterConnector.CreateWorker(id, serviceURL, entryURL);
+                string[] args = { id.ToString(), serviceURL, entryURL };
+
+                Process p = new Process();
+                p.StartInfo.UseShellExecute = false;
+                p.StartInfo.RedirectStandardOutput = false;
+                p.StartInfo.RedirectStandardInput = false;
+                p.StartInfo.FileName = "Z:\\Documents\\GitHub\\PADI\\PADIMapNoReduce\\WorkerPMNR\\bin\\Debug\\WorkerPMNR.exe";
+                p.StartInfo.Arguments = String.Join(" ", args);
+                p.Start();
+
+                ReceiveNewWorker(id, serviceURL);  //Adds workerID , URL pair
+                BroadcastNewWorker(id, serviceURL); //Advertises workerID , URL pair
+
+            }
+            else {
+                RemotePuppetMasterInterface pm = (RemotePuppetMasterInterface)Activator.GetObject(typeof(RemotePuppetMasterInterface), puppetMasterURL);
+                pm.CreateWorker(id, serviceURL, entryURL);
+            }
         }
+
 
         public void SUBMIT(string entryURL, string filePath, string outputFolderPath, string nSplits, string dllFilePath, string mapClassName) { 
             //Creates user application in local node. The application submits the designated job
@@ -75,11 +101,24 @@ namespace PuppetMasterPMNR {
         }
 
         public void STATUS() { 
-            //Makes all workers print their status
+            //Makes all workers print their status        
         }
+        
 
         public void SLOWW(int id, int secondsDelay) {
-            //Injects the specified delay on worker with ID = id
+            string serviceURL = null;
+            foreach (KeyValuePair<int, string> k in workplace)
+                if (k.Key == id) {
+                    serviceURL = k.Value;
+                    break;
+                }
+            if (serviceURL == null) {
+                MessageBox.Show("There is no such worker");
+                return;
+            }
+
+            RemoteWorkerInterface w = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), serviceURL);
+            w.Slow(secondsDelay);
         }
 
         public void FREEZEW(int id){
@@ -91,11 +130,23 @@ namespace PuppetMasterPMNR {
         }
 
         public void FREEZEC(int id) { 
-            //Disables communication of jobtacker in worker id
+            //Disables communication of jobtracker in worker id
         }
 
         public void UNFREEZEC(int id) { 
             //Enables communication of jobtracker in worker id
+        }
+
+        public void ReceiveNewWorker(int id, string serviceURL){
+            workplace.Add(new KeyValuePair<int,string>(id,serviceURL));
+        }
+
+        public void BroadcastNewWorker(int workerID, string serviceURL) {
+
+            foreach (string rpm in puppetMasters) {
+                RemotePuppetMasterInterface pm = (RemotePuppetMasterInterface)Activator.GetObject(typeof(RemotePuppetMasterInterface), rpm);
+                pm.ReceiveWorker(workerID, serviceURL);
+            }
         }
     }
 
@@ -108,25 +159,28 @@ namespace PuppetMasterPMNR {
             this.puppetMaster = pm;
         }
 
-
         public void CreateWorker(int id, string serviceURL, string entryURL) {
-            TcpChannel channel = new TcpChannel(puppetMaster.GetLastPort()+1);
-            ChannelServices.RegisterChannel(channel, false);
-            RemoteWorker remoteWorker = new RemoteWorker(puppetMaster.GetLastPort()+1);
-            RemotingServices.Marshal(remoteWorker, "W", typeof(RemoteWorkerInterface));
+            string[] args = { id.ToString(), serviceURL, entryURL };
 
+            Process p = new Process();
 
+            p.StartInfo.UseShellExecute = false;
+            p.StartInfo.RedirectStandardOutput = false;
+            p.StartInfo.RedirectStandardInput = false;
+            p.StartInfo.FileName = "Z:\\Documents\\GitHub\\PADI\\PADIMapNoReduce\\WorkerPMNR\\bin\\Debug\\WorkerPMNR.exe";
+            p.StartInfo.Arguments = String.Join(" ", args);
+            p.Start();
+            puppetMaster.ReceiveNewWorker(id, serviceURL); //Adds workerID , URL pair
+            puppetMaster.BroadcastNewWorker(id, serviceURL); //Advertises workerID , URL pair
         }
-
 
         public int Connect(string newPuppetMasterURL) {
             puppetMaster.AddPuppetMaster(newPuppetMasterURL);
             return puppetMaster.GetLastPort();
         }
 
-        public void BroadcastNewWorker(int lastPort, int workerID, string puppetMasterURL) {
-            puppetMaster.SetLastPort(lastPort);
-            puppetMaster.AddWorkplace(workerID, puppetMasterURL);
+        public void ReceiveWorker(int workerID, string serviceURL) {
+            puppetMaster.ReceiveNewWorker(workerID, serviceURL);
         }
 
     }

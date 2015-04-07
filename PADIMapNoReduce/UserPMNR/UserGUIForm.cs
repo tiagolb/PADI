@@ -26,7 +26,7 @@ namespace UserPMNR {
         }
 
 
-        public UserGUIForm(string entryURL, string filePath, string outputFolderPath, string nSplits, string dllFilePath, string mapClassName) {
+        public UserGUIForm(string entryURL, string filePath, string outputFolderPath, string nSplits, string mapClassName, string dllFilePath) {
             InitializeComponent();
             this._entryURL = entryURL;
             this._inputFilePath = filePath;
@@ -87,8 +87,8 @@ namespace UserPMNR {
         public void SubmitJob() {
             this._client = new Client();
             this._client.INIT(_entryURL);
-            this._client.SUBMIT(_inputFilePath, _numberSplits, _outputFolderPath, _dllFilePath, _mapClassName);
-            lb_bytes.Text += _client.SUBMIT(_inputFilePath, _numberSplits, _outputFolderPath, _dllFilePath, _mapClassName);
+            this._client.SUBMIT(_inputFilePath, _numberSplits, _outputFolderPath, _mapClassName, _dllFilePath);
+            lb_bytes.Text += _client.SUBMIT(_inputFilePath, _numberSplits, _outputFolderPath, _mapClassName, _dllFilePath);
         }
 
         protected override bool ShowWithoutActivation {

@@ -4,10 +4,13 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using PuppetMasterPMNR;
+using System.Net;
+using System.Net.Sockets;
 
 namespace PuppetMasterPMNR {
     public partial class PuppetMasterForm : Form {
@@ -16,7 +19,12 @@ namespace PuppetMasterPMNR {
 
         public PuppetMasterForm() {
             InitializeComponent();
-             puppetMaster = new PuppetMaster(this);
+            puppetMaster = new PuppetMaster(this);
+            
+            //Fill textbox of PuppetMasterServiceURL
+            string host = "" + Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+            string url = "tcp://" + host + ":" + 20001 + "/PM";
+            tb_PuppetMasterURL.Text = url; 
         }
 
         private void bt_script_Click(object sender, EventArgs e) {
@@ -27,25 +35,35 @@ namespace PuppetMasterPMNR {
             }
         }
 
-        private void bt_PuppetMasterURLSubmit_Click(object sender, EventArgs e) {
-
-        }
-
         private void bt_submitScript_Click(object sender, EventArgs e) {
-
+            using (StreamReader sr = File.OpenText(tb_scriptFileAddress.Text)) {
+                string s = String.Empty;
+                while ((s = sr.ReadLine()) != null) {
+                    ProcessCommand(s);
+                }
+            }
         }
-
 
         private void bt_singleCommand_Click(object sender, EventArgs e) {
-            char[] delimiter = { ' ' };
-
             string command = tb_singleCommand.Text;
-            MessageBox.Show(command);
+            ProcessCommand(command);
+        }
+
+        private void ProcessCommand(string command) {
+
+            if(command.StartsWith("%"))
+                return;
+
+              char[] delimiter = { ' ' };
+
             string[] words = command.Split(delimiter);
 
             switch (words[0]) {   
                 case "WORKER":
-                    puppetMaster.WORKER(Int32.Parse(words[1]), words[2], words[3], words[4]);
+                    if(words.Length == 5)
+                        puppetMaster.WORKER(Int32.Parse(words[1]), words[2], words[3], words[4]);
+                    else
+                        puppetMaster.WORKER(Int32.Parse(words[1]), words[2], words[3], "NOENTRYPOINT");
                     return;
                 case "SUBMIT":
                     puppetMaster.SUBMIT(words[1], words[2], words[3], words[4], words[5], words[6]);

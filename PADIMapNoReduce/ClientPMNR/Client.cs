@@ -31,7 +31,7 @@ namespace ClientPMNR {
 
         }
 
-        public int SUBMIT(string inputFilePath, int numberSplits, string outputFolderPath, string dllFilePath, string className) {
+        public int SUBMIT(string inputFilePath, int numberSplits, string outputFolderPath, string className, string dllFilePath) {
             inputFile = inputFilePath;
             outputFolder = outputFolderPath+"/";
             byte[] file = File.ReadAllBytes(inputFilePath);

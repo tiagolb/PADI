@@ -46,7 +46,6 @@
             // 
             // tb_PuppetMasterURL
             // 
-            this.tb_PuppetMasterURL.Enabled = false;
             this.tb_PuppetMasterURL.Location = new System.Drawing.Point(162, 6);
             this.tb_PuppetMasterURL.Name = "tb_PuppetMasterURL";
             this.tb_PuppetMasterURL.Size = new System.Drawing.Size(489, 20);

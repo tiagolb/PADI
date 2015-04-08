@@ -11,6 +11,7 @@ using System.Net;
 using PADIMapNoReduce;
 using InterfacePMNR;
 using System.Net.Sockets;
+using System.Threading;
 
 
 namespace WorkerPMNR {
@@ -122,6 +123,9 @@ namespace WorkerPMNR {
         private string nextNodeURL;
         private string clientURL;
 
+        // Thread 
+        Thread workerThread;
+
         public RemoteWorker() { }
 
         public RemoteWorker(string serviceURL, int id) {
@@ -145,7 +149,8 @@ namespace WorkerPMNR {
         }
 
         public void Slow(int secondsDelay) {
-            worker.ApplyDelay(secondsDelay);
+            //worker.ApplyDelay(secondsDelay);
+            //if (workerThread != null) {}
         }
 
         public void BroadcastClient(int stopId, string clientURL) {
@@ -269,23 +274,28 @@ namespace WorkerPMNR {
             Console.WriteLine("remainingBytes: "+ remainingBytes+". bytesPerMachine: " + bytesPerMachine + ". BytesPerSplit: " + bytesPerSplit);
             int begin = topologyID * bytesPerMachine;
             bool first = (topologyID == 0);
-            IList<KeyValuePair<string, string>> processedSplit;
             int splitsPerMachine = bytesPerMachine / bytesPerSplit;
             worker = new Worker(code, className);
 
             //ID of first split, ID starts with 1
-            int firstSplit = topologyID * this.numberSplits + 1;
-
+            int firstSplit = topologyID * splitsPerMachine + 1;
+            
             // We want to request all our lines plus the next split
             int bytesToRequest = bytesPerMachine + bytesPerSplit;
 
             if (remainingBytes < bytesToRequest) {
                 bytesToRequest = remainingBytes;
-            }
-            else {
+            } else {
                 remainingBytes -= bytesPerMachine;
                 nextNode.Broadcast(remainingBytes, bytesPerMachine, bytesPerSplit, code, className);
             }
+
+            workerThread = new Thread(() => processSplitsThread(bytesPerSplit, begin, first, splitsPerMachine, firstSplit, bytesToRequest));
+            workerThread.Start();
+        }
+
+        private void processSplitsThread(int bytesPerSplit, int begin, bool first, int splitsPerMachine, int firstSplit, int bytesToRequest) {
+            IList<KeyValuePair<string, string>> processedSplit;
             int end = begin + bytesToRequest;
             //Console.WriteLine("Before Client");
             byte[] bytes = client.getSplit(begin, end);
@@ -296,24 +306,20 @@ namespace WorkerPMNR {
             Console.WriteLine(splits.Count);
             //Console.WriteLine("BeforeSend");
             int splitId;
-            string result = "";
             for (int i = 0; (i < splitsPerMachine && i < splits.Count); i++) {
                 splitId = firstSplit + i;
+                string result = "";
                 processedSplit = worker.processSplit(splits[i]);
                 //Console.WriteLine(processedSplit.ToString());
                 //Console.WriteLine("Split: " + processedSplit[0].Key + "\r\n" + processedSplit[0].Value + "\r\n");
                 foreach (KeyValuePair<string, string> pair in processedSplit) {
-                    result += pair.Key + Environment.NewLine + pair.Value + Environment.NewLine;
+                    result += pair.Key + " : " + pair.Value + Environment.NewLine;
                 }
                 Console.WriteLine("Result: " + result);
+                Console.WriteLine("SentSplit " + splitId);
                 client.sendProcessedSplit(result, splitId);
-                result = "";
-                //Console.WriteLine("SentSplit " + splitId);
             }
         }
-
-
-
 
         public void JobMetaData(int numberSplits, int numLines, byte[] code, string className) {
             Console.WriteLine("JobMetaData");

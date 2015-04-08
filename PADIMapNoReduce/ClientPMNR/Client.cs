@@ -13,7 +13,6 @@ using InterfacePMNR;
 namespace ClientPMNR {
     public class Client {
 
-
         private RemoteWorkerInterface remoteWorker;
         private TcpChannel channel;
         private string url = "tcp://localhost:8086/Client";
@@ -46,6 +45,8 @@ namespace ClientPMNR {
 
     public class RemoteClient : MarshalByRefObject, RemoteClientInterface {
 
+        private static Object thisLock = new Object();
+
         IList<IList<KeyValuePair<string, string>>> processedSplits;
 
 
@@ -61,9 +62,12 @@ namespace ClientPMNR {
             int splitSize = end - begin;
             byte[] split = new byte[splitSize];
 
-            using (BinaryReader reader = new BinaryReader(new FileStream(Client.inputFile, FileMode.Open))) {
-                reader.BaseStream.Seek(begin, SeekOrigin.Begin);
-                reader.Read(split, 0, splitSize);
+            lock (thisLock) {
+                using (BinaryReader reader = new BinaryReader(new FileStream(Client.inputFile, FileMode.Open))) {
+                    reader.BaseStream.Seek(begin, SeekOrigin.Begin);
+                    reader.Read(split, 0, splitSize);
+                    reader.Close();
+                }
             }
 
             return split;

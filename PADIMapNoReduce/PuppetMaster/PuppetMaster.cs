@@ -15,6 +15,7 @@ using WorkerPMNR;
 using System.Net;
 using System.Net.Sockets;
 using System.Diagnostics;
+using System.IO;
 
 namespace PuppetMasterPMNR {
     public class PuppetMaster {
@@ -68,7 +69,9 @@ namespace PuppetMasterPMNR {
                 p.StartInfo.UseShellExecute = false;
                 p.StartInfo.RedirectStandardOutput = false;
                 p.StartInfo.RedirectStandardInput = false;
-                p.StartInfo.FileName = "Z:\\Documents\\GitHub\\PADI\\PADIMapNoReduce\\WorkerPMNR\\bin\\Debug\\WorkerPMNR.exe";
+
+                System.IO.DirectoryInfo myDirectory = new DirectoryInfo(Environment.CurrentDirectory);
+                p.StartInfo.FileName = System.IO.Path.Combine(myDirectory.ToString(), "..\\..\\..\\WorkerPMNR\\bin\\Debug\\WorkerPMNR.exe");
                 p.StartInfo.Arguments = String.Join(" ", args);
                 p.Start();
 
@@ -163,11 +166,13 @@ namespace PuppetMasterPMNR {
             string[] args = { id.ToString(), serviceURL, entryURL };
 
             Process p = new Process();
-
+            //Z:\\Documents\\GitHub\\PADI\\PADIMapNoReduce\\WorkerPMNR\\bin\\Debug\\WorkerPMNR.exe
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardOutput = false;
             p.StartInfo.RedirectStandardInput = false;
-            p.StartInfo.FileName = "Z:\\Documents\\GitHub\\PADI\\PADIMapNoReduce\\WorkerPMNR\\bin\\Debug\\WorkerPMNR.exe";
+
+            System.IO.DirectoryInfo myDirectory = new DirectoryInfo(Environment.CurrentDirectory);
+            p.StartInfo.FileName = System.IO.Path.Combine(myDirectory.ToString(), "..\\..\\..\\WorkerPMNR\\bin\\Debug\\WorkerPMNR.exe");
             p.StartInfo.Arguments = String.Join(" ", args);
             p.Start();
             puppetMaster.ReceiveNewWorker(id, serviceURL); //Adds workerID , URL pair

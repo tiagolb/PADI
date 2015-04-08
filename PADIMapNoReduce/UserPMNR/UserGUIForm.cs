@@ -87,7 +87,6 @@ namespace UserPMNR {
         public void SubmitJob() {
             this._client = new Client();
             this._client.INIT(_entryURL);
-            this._client.SUBMIT(_inputFilePath, _numberSplits, _outputFolderPath, _mapClassName, _dllFilePath);
             lb_bytes.Text += _client.SUBMIT(_inputFilePath, _numberSplits, _outputFolderPath, _mapClassName, _dllFilePath);
         }
 

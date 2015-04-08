@@ -18,16 +18,16 @@ namespace WorkerPMNR {
     public class WorkerPMNR {
 
 
-       public static void Main(string[] args) {
-           int id = Int32.Parse(args[0]);
-           string serviceURL = args[1];
-           string entryPointURL = args[2];
-           string host = "" + Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
-           Uri baseUri = new Uri(serviceURL);
-           int port = baseUri.Port;
+        public static void Main(string[] args) {
+            int id = Int32.Parse(args[0]);
+            string serviceURL = args[1];
+            string entryPointURL = args[2];
+            string host = "" + Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+            Uri baseUri = new Uri(serviceURL);
+            int port = baseUri.Port;
 
-           Console.WriteLine("ServiceURL: " + serviceURL);
-           Console.WriteLine("EntryPointURL: " + entryPointURL);
+            Console.WriteLine("ServiceURL: " + serviceURL);
+            Console.WriteLine("EntryPointURL: " + entryPointURL);
 
 
             TcpChannel channel = new TcpChannel(port);
@@ -141,7 +141,7 @@ namespace WorkerPMNR {
         }
 
         public void SetClientURL(string clientURL) {
-            if(nextNode != null) {
+            if (nextNode != null) {
                 int stopID = mod((this.topologyID - 1), totalNodes);
                 BroadcastClient(stopID, clientURL);
             }
@@ -221,57 +221,57 @@ namespace WorkerPMNR {
             return lines;
         }
 
-       /* private IList<string> getLinesFromBytes(byte[] bytes, int bytesPerSplit, bool first) {
-            IList<string> lines = new List<string>();
-            string splitsString = System.Text.Encoding.ASCII.GetString(bytes);
-            int beginPos;
-            int lengthOfSplit;
-            string split;
-            int newLineSize = Environment.NewLine.Length;
+        /* private IList<string> getLinesFromBytes(byte[] bytes, int bytesPerSplit, bool first) {
+             IList<string> lines = new List<string>();
+             string splitsString = System.Text.Encoding.ASCII.GetString(bytes);
+             int beginPos;
+             int lengthOfSplit;
+             string split;
+             int newLineSize = Environment.NewLine.Length;
 
-            if (first) {
-                beginPos = 0;
-            }
-            else {
-                beginPos = splitsString.IndexOf(Environment.NewLine) + newLineSize;
-            }
-            splitsString = splitsString.Substring(beginPos);
-            int length = splitsString.Length;
-            while (length > 0) {
-                // Stop condition
-                if (length < bytesPerSplit) {
-                    lines.Add(splitsString);
-                    return lines;
-                }
+             if (first) {
+                 beginPos = 0;
+             }
+             else {
+                 beginPos = splitsString.IndexOf(Environment.NewLine) + newLineSize;
+             }
+             splitsString = splitsString.Substring(beginPos);
+             int length = splitsString.Length;
+             while (length > 0) {
+                 // Stop condition
+                 if (length < bytesPerSplit) {
+                     lines.Add(splitsString);
+                     return lines;
+                 }
 
-                // new line after end of split
-                if(bytesPerSplit >= length/2)  //Heuristic
-                    lengthOfSplit = splitsString.IndexOf(Environment.NewLine, bytesPerSplit-bytesPerSplit/2);  
-                else
-                    lengthOfSplit = splitsString.IndexOf(Environment.NewLine, bytesPerSplit);
+                 // new line after end of split
+                 if(bytesPerSplit >= length/2)  //Heuristic
+                     lengthOfSplit = splitsString.IndexOf(Environment.NewLine, bytesPerSplit-bytesPerSplit/2);  
+                 else
+                     lengthOfSplit = splitsString.IndexOf(Environment.NewLine, bytesPerSplit);
                 
-                Console.WriteLine("Comprimento do Split: " +lengthOfSplit);
+                 Console.WriteLine("Comprimento do Split: " +lengthOfSplit);
 
-                if (lengthOfSplit > 0) {
-                    split = splitsString.Substring(0, lengthOfSplit);
-                    lengthOfSplit += newLineSize;
-                    splitsString = splitsString.Substring(lengthOfSplit);
-                }
-                else {
-                    // Last line
-                    split = splitsString.Substring(0);
-                    splitsString = "";
-                }
-                lines.Add(split);
+                 if (lengthOfSplit > 0) {
+                     split = splitsString.Substring(0, lengthOfSplit);
+                     lengthOfSplit += newLineSize;
+                     splitsString = splitsString.Substring(lengthOfSplit);
+                 }
+                 else {
+                     // Last line
+                     split = splitsString.Substring(0);
+                     splitsString = "";
+                 }
+                 lines.Add(split);
 
-                length = splitsString.Length;
-                Console.WriteLine("O que falta: " + length);
-            }
-            return lines;
-        }
-        */
+                 length = splitsString.Length;
+                 Console.WriteLine("O que falta: " + length);
+             }
+             return lines;
+         }
+         */
         public void Broadcast(int remainingBytes, int bytesPerMachine, int bytesPerSplit, byte[] code, string className) {
-            Console.WriteLine("remainingBytes: "+ remainingBytes+". bytesPerMachine: " + bytesPerMachine + ". BytesPerSplit: " + bytesPerSplit);
+            Console.WriteLine("remainingBytes: " + remainingBytes + ". bytesPerMachine: " + bytesPerMachine + ". BytesPerSplit: " + bytesPerSplit);
             int begin = topologyID * bytesPerMachine;
             bool first = (topologyID == 0);
             int splitsPerMachine = bytesPerMachine / bytesPerSplit;
@@ -279,7 +279,7 @@ namespace WorkerPMNR {
 
             //ID of first split, ID starts with 1
             int firstSplit = topologyID * splitsPerMachine + 1;
-            
+
             // We want to request all our lines plus the next split
             int bytesToRequest = bytesPerMachine + bytesPerSplit;
 

@@ -61,7 +61,8 @@ namespace PuppetMasterPMNR {
 
 
         public void WORKER(int id, string puppetMasterURL, string serviceURL, string entryURL) {
-            if (puppetMasterURL.Equals(GetURL())) {
+            Uri baseUri = new Uri(puppetMasterURL);
+            if (puppetMasterURL.Equals(GetURL()) || baseUri.IsLoopback) {
 
                 string[] args = { id.ToString(), serviceURL, entryURL };
 
@@ -100,6 +101,7 @@ namespace PuppetMasterPMNR {
 
         public void WAIT(int seconds) { 
             //PuppetMaster stops its script execution for x seconds
+
             System.Threading.Thread.Sleep(1000*seconds);
         }
 

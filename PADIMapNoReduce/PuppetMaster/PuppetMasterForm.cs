@@ -94,6 +94,25 @@ namespace PuppetMasterPMNR {
             }
         }
 
+        private void bt_openConfig_Click(object sender, EventArgs e) {
+            ofd_config.Filter = "TXT|*.txt";
+            if (ofd_config.ShowDialog() == DialogResult.OK) {
+                tb_configFileName.Text = ofd_config.SafeFileName;
+                tb_configFileAddress.Text = ofd_config.FileName;
+            }
+        }
+
+        private void bt_submitConfig_Click(object sender, EventArgs e) {
+            using (StreamReader sr = File.OpenText(tb_configFileAddress.Text)) {
+                string address = String.Empty;
+                while ((address = sr.ReadLine()) != null) {
+                    Uri baseUri = new Uri(address);
+                    if (!baseUri.IsLoopback && !address.Equals(puppetMaster.GetURL()))
+                        puppetMaster.AddPuppetMaster(address);
+                }
+            }
+        }
+
 
     }
 }

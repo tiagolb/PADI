@@ -15,17 +15,17 @@ namespace ClientPMNR {
 
         private RemoteWorkerInterface remoteWorker;
         private TcpChannel channel;
-        private string url = "tcp://localhost:8086/Client";
+        private string url = "tcp://localhost:10001/C";
         // TODO: We need to access this from remoteClient
         public static string inputFile;
         public static string outputFolder;
 
         public void INIT(string entryURL) {
             remoteWorker = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), entryURL);
-            channel = new TcpChannel(8086);
+            channel = new TcpChannel(10001);
             // It should work but says we already registered a channel named 'tcp'
             //ChannelServices.RegisterChannel(channel, false);
-            RemotingConfiguration.RegisterWellKnownServiceType(typeof(RemoteClient), "Client", WellKnownObjectMode.SingleCall);
+            RemotingConfiguration.RegisterWellKnownServiceType(typeof(RemoteClient), "C", WellKnownObjectMode.SingleCall);
             remoteWorker.SetClientURL(url);
 
         }

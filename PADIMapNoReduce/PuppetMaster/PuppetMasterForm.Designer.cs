@@ -33,6 +33,11 @@
             this.tb_singleCommand = new System.Windows.Forms.TextBox();
             this.lb_singleCommand = new System.Windows.Forms.Label();
             this.bt_singleCommand = new System.Windows.Forms.Button();
+            this.ofd_config = new System.Windows.Forms.OpenFileDialog();
+            this.bt_submitConfig = new System.Windows.Forms.Button();
+            this.tb_configFileAddress = new System.Windows.Forms.TextBox();
+            this.tb_configFileName = new System.Windows.Forms.TextBox();
+            this.bt_openConfig = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // lb_PuppetMasterURL
@@ -91,7 +96,7 @@
             // 
             // tb_singleCommand
             // 
-            this.tb_singleCommand.Location = new System.Drawing.Point(116, 187);
+            this.tb_singleCommand.Location = new System.Drawing.Point(107, 168);
             this.tb_singleCommand.Name = "tb_singleCommand";
             this.tb_singleCommand.Size = new System.Drawing.Size(535, 20);
             this.tb_singleCommand.TabIndex = 9;
@@ -99,7 +104,7 @@
             // lb_singleCommand
             // 
             this.lb_singleCommand.AutoSize = true;
-            this.lb_singleCommand.Location = new System.Drawing.Point(24, 190);
+            this.lb_singleCommand.Location = new System.Drawing.Point(15, 171);
             this.lb_singleCommand.Name = "lb_singleCommand";
             this.lb_singleCommand.Size = new System.Drawing.Size(86, 13);
             this.lb_singleCommand.TabIndex = 10;
@@ -107,7 +112,7 @@
             // 
             // bt_singleCommand
             // 
-            this.bt_singleCommand.Location = new System.Drawing.Point(657, 184);
+            this.bt_singleCommand.Location = new System.Drawing.Point(648, 165);
             this.bt_singleCommand.Name = "bt_singleCommand";
             this.bt_singleCommand.Size = new System.Drawing.Size(115, 23);
             this.bt_singleCommand.TabIndex = 11;
@@ -115,11 +120,53 @@
             this.bt_singleCommand.UseVisualStyleBackColor = true;
             this.bt_singleCommand.Click += new System.EventHandler(this.bt_singleCommand_Click);
             // 
+            // ofd_config
+            // 
+            this.ofd_config.FileName = "ofd_config";
+            // 
+            // bt_submitConfig
+            // 
+            this.bt_submitConfig.Location = new System.Drawing.Point(657, 247);
+            this.bt_submitConfig.Name = "bt_submitConfig";
+            this.bt_submitConfig.Size = new System.Drawing.Size(115, 48);
+            this.bt_submitConfig.TabIndex = 16;
+            this.bt_submitConfig.Text = "Submit Config";
+            this.bt_submitConfig.UseVisualStyleBackColor = true;
+            this.bt_submitConfig.Click += new System.EventHandler(this.bt_submitConfig_Click);
+            // 
+            // tb_configFileAddress
+            // 
+            this.tb_configFileAddress.Location = new System.Drawing.Point(16, 275);
+            this.tb_configFileAddress.Name = "tb_configFileAddress";
+            this.tb_configFileAddress.Size = new System.Drawing.Size(635, 20);
+            this.tb_configFileAddress.TabIndex = 15;
+            // 
+            // tb_configFileName
+            // 
+            this.tb_configFileName.Location = new System.Drawing.Point(98, 247);
+            this.tb_configFileName.Name = "tb_configFileName";
+            this.tb_configFileName.Size = new System.Drawing.Size(553, 20);
+            this.tb_configFileName.TabIndex = 14;
+            // 
+            // bt_openConfig
+            // 
+            this.bt_openConfig.Location = new System.Drawing.Point(16, 245);
+            this.bt_openConfig.Name = "bt_openConfig";
+            this.bt_openConfig.Size = new System.Drawing.Size(75, 23);
+            this.bt_openConfig.TabIndex = 13;
+            this.bt_openConfig.Text = "Open Config";
+            this.bt_openConfig.UseVisualStyleBackColor = true;
+            this.bt_openConfig.Click += new System.EventHandler(this.bt_openConfig_Click);
+            // 
             // PuppetMasterForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(784, 562);
+            this.Controls.Add(this.bt_submitConfig);
+            this.Controls.Add(this.tb_configFileAddress);
+            this.Controls.Add(this.tb_configFileName);
+            this.Controls.Add(this.bt_openConfig);
             this.Controls.Add(this.bt_singleCommand);
             this.Controls.Add(this.lb_singleCommand);
             this.Controls.Add(this.tb_singleCommand);
@@ -148,6 +195,11 @@
         private System.Windows.Forms.TextBox tb_singleCommand;
         private System.Windows.Forms.Label lb_singleCommand;
         private System.Windows.Forms.Button bt_singleCommand;
+        private System.Windows.Forms.OpenFileDialog ofd_config;
+        private System.Windows.Forms.Button bt_submitConfig;
+        private System.Windows.Forms.TextBox tb_configFileAddress;
+        private System.Windows.Forms.TextBox tb_configFileName;
+        private System.Windows.Forms.Button bt_openConfig;
     }
 }
 

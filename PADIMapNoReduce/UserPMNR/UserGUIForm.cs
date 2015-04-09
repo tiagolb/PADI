@@ -79,9 +79,11 @@ namespace UserPMNR {
         }
 
         private void bt_submitJob_Click(object sender, EventArgs e) {
-            _numberSplits = Int32.Parse(tb_splits.Text);
-            _mapClassName = tb_mapClass.Text;
-            lb_bytes.Text += _client.SUBMIT(_inputFilePath, _numberSplits, _outputFolderPath, _dllFilePath, _mapClassName);
+            if ((tb_splits.Text != null) && (tb_mapClass.Text != null)) {
+                _numberSplits = Int32.Parse(tb_splits.Text);
+                _mapClassName = tb_mapClass.Text;
+                lb_bytes.Text += _client.SUBMIT(_inputFilePath, _numberSplits, _outputFolderPath, _dllFilePath, _mapClassName);
+            } else MessageBox.Show("Please fill all fields");
         }
 
         public void SubmitJob() {

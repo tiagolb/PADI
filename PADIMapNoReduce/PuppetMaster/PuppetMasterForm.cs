@@ -36,17 +36,23 @@ namespace PuppetMasterPMNR {
         }
 
         private void bt_submitScript_Click(object sender, EventArgs e) {
-            using (StreamReader sr = File.OpenText(tb_scriptFileAddress.Text)) {
-                string s = String.Empty;
-                while ((s = sr.ReadLine()) != null) {
-                    ProcessCommand(s);
+            if(tb_scriptFileAddress.Text != ""){
+                using (StreamReader sr = File.OpenText(tb_scriptFileAddress.Text)) {
+                    string s = String.Empty;
+                    while ((s = sr.ReadLine()) != null) {
+                        ProcessCommand(s);
+                    }
                 }
             }
+            else MessageBox.Show("Insert a file path for the script");
         }
 
         private void bt_singleCommand_Click(object sender, EventArgs e) {
-            string command = tb_singleCommand.Text;
-            ProcessCommand(command);
+            if (tb_singleCommand.Text != "") {
+                string command = tb_singleCommand.Text;
+                ProcessCommand(command);
+            }
+            else MessageBox.Show("Insert a command");
         }
 
         private void ProcessCommand(string command) {
@@ -103,28 +109,37 @@ namespace PuppetMasterPMNR {
         }
 
         private void bt_submitConfig_Click(object sender, EventArgs e) {
+            if (tb_configFileAddress.Text != "") {
+                using (StreamReader sr = File.OpenText(tb_configFileAddress.Text)) {
+                    string address = String.Empty;
+                    while ((address = sr.ReadLine()) != null) {
+                        Uri baseUri = new Uri(address);
+                        if (baseUri.IsLoopback || baseUri.Host.Equals(host)) {
+                            puppetMaster = new PuppetMaster(this, baseUri.Port);
+                            tb_PuppetMasterURL.Text = "tcp://" + host + ":" + baseUri.Port + "/PM";
+                        }
+                    }
+                }
 
-            using (StreamReader sr = File.OpenText(tb_configFileAddress.Text)) {
-                string address = String.Empty;
-                while ((address = sr.ReadLine()) != null) {
-                    Uri baseUri = new Uri(address);
-                    if (baseUri.IsLoopback || baseUri.Host.Equals(host)) {
-                        puppetMaster = new PuppetMaster(this, baseUri.Port);
-                        tb_PuppetMasterURL.Text = "tcp://" + host + ":" + baseUri.Port + "/PM";
+
+                using (StreamReader sr = File.OpenText(tb_configFileAddress.Text)) {
+                    string address = String.Empty;
+                    while ((address = sr.ReadLine()) != null) {
+                        Uri baseUri = new Uri(address);
+                        if (!baseUri.IsLoopback && !address.Equals(puppetMaster.GetURI())) {
+                            puppetMaster.AddPuppetMaster(address);
+                        }
                     }
                 }
-            }
-      
-            using (StreamReader sr = File.OpenText(tb_configFileAddress.Text)) {
-                string address = String.Empty;
-                while ((address = sr.ReadLine()) != null) {
-                    Uri baseUri = new Uri(address);
-                    if (!baseUri.IsLoopback && !address.Equals(puppetMaster.GetURI())) {
-                        puppetMaster.AddPuppetMaster(address);
-                        MessageBox.Show(address);
-                    }
-                }
-            }
+
+                bt_script.Enabled = true;
+                bt_submitScript.Enabled = true;
+                bt_singleCommand.Enabled = true;
+                tb_scriptFileName.Enabled = true;
+                tb_scriptFileAddress.Enabled = true;
+                tb_singleCommand.Enabled = true;
+
+            } else MessageBox.Show("Insert a file path for the script");
         }
 
 

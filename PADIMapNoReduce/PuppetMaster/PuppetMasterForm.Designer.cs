@@ -61,6 +61,7 @@
             // 
             // bt_script
             // 
+            this.bt_script.Enabled = false;
             this.bt_script.Location = new System.Drawing.Point(16, 221);
             this.bt_script.Name = "bt_script";
             this.bt_script.Size = new System.Drawing.Size(75, 23);
@@ -75,6 +76,7 @@
             // 
             // tb_scriptFileName
             // 
+            this.tb_scriptFileName.Enabled = false;
             this.tb_scriptFileName.Location = new System.Drawing.Point(98, 223);
             this.tb_scriptFileName.Name = "tb_scriptFileName";
             this.tb_scriptFileName.Size = new System.Drawing.Size(553, 20);
@@ -82,6 +84,7 @@
             // 
             // tb_scriptFileAddress
             // 
+            this.tb_scriptFileAddress.Enabled = false;
             this.tb_scriptFileAddress.Location = new System.Drawing.Point(16, 251);
             this.tb_scriptFileAddress.Name = "tb_scriptFileAddress";
             this.tb_scriptFileAddress.Size = new System.Drawing.Size(635, 20);
@@ -89,6 +92,7 @@
             // 
             // bt_submitScript
             // 
+            this.bt_submitScript.Enabled = false;
             this.bt_submitScript.Location = new System.Drawing.Point(657, 223);
             this.bt_submitScript.Name = "bt_submitScript";
             this.bt_submitScript.Size = new System.Drawing.Size(115, 48);
@@ -99,6 +103,7 @@
             // 
             // tb_singleCommand
             // 
+            this.tb_singleCommand.Enabled = false;
             this.tb_singleCommand.Location = new System.Drawing.Point(98, 295);
             this.tb_singleCommand.Name = "tb_singleCommand";
             this.tb_singleCommand.Size = new System.Drawing.Size(553, 20);
@@ -115,6 +120,7 @@
             // 
             // bt_singleCommand
             // 
+            this.bt_singleCommand.Enabled = false;
             this.bt_singleCommand.Location = new System.Drawing.Point(657, 292);
             this.bt_singleCommand.Name = "bt_singleCommand";
             this.bt_singleCommand.Size = new System.Drawing.Size(115, 23);

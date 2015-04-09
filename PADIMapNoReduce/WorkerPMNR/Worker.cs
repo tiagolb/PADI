@@ -117,16 +117,12 @@ namespace WorkerPMNR {
             this.nextNodeURL = this.url;
         }
 
-
-        public void SetCurrentNextNodeURL(string url) {
-            nextNodeURL = url;
-        }
-
         public void SetClientURL(string clientURL) {
             if (nextNode != null) {
                 int stopID = mod((this.topologyID - 1), totalNodes);
-                BroadcastClient(stopID, clientURL);
+                nextNode.BroadcastClient(stopID, clientURL);
             }
+            Console.WriteLine("Client: " + clientURL);
             client = (RemoteClientInterface)Activator.GetObject(typeof(RemoteClientInterface), clientURL);
         }
 
@@ -146,6 +142,7 @@ namespace WorkerPMNR {
 
 
         public void SetNextNodeURL(string workerURL) {
+            Console.WriteLine("NextNodeURL: " + workerURL);
             nextNode = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), workerURL);
         }
 
@@ -176,10 +173,11 @@ namespace WorkerPMNR {
             }
 
             int end = begin + correctedBytesPerMachine;
+            int extraSplitBytes = bytesPerSplit;
             if (this.topologyID == stopID) {
-                bytesPerSplit = 0;
+                extraSplitBytes = 0;
             }
-            byte[] splits = this.client.getSplits(begin, end, bytesPerSplit);
+            byte[] splits = this.client.getSplits(begin, end, extraSplitBytes);
 
             begin = end + 1;
             //this.nextNode.Broadcast(begin, bytesPerSplit, extraBytes, splitsPerMachine, extraSplits, code, className);
@@ -245,6 +243,12 @@ namespace WorkerPMNR {
             int splitsPerMachine = numberSplits / this.totalNodes;
             int extraSplits = mod(numberSplits, this.totalNodes);
 
+            Console.WriteLine("JobMetaData NSplits -> " + numberSplits);
+            Console.WriteLine("JobMetaData bps-> " + bytesPerSplit);
+            Console.WriteLine("JobMetaData eb-> " + extraBytes);
+            Console.WriteLine("JobMetaData spm-> " + splitsPerMachine);
+            Console.WriteLine("JobMetaData es-> " + extraSplits);
+            
             int stopID = 0;
             if (nextNode != null) {   //Compute the ID of the node that shall stop broadcasting
                 stopID = mod((this.topologyID - 1), totalNodes);
@@ -278,7 +282,6 @@ namespace WorkerPMNR {
             //Update nextNodes references, both for the new node and the entry point node
             nextNode = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), workerURL);
             nextNode.SetNextNodeURL(nextNodeURL);
-            nextNode.SetCurrentNextNodeURL(nextNodeURL);
             nextNodeURL = workerURL;
             Console.WriteLine("Connect -> ID: " + this.id + " TopologyID: " + this.topologyID + " totalNodes: " + this.totalNodes);
             //Returns to the new Node it's ID and Total Nodes in the ring

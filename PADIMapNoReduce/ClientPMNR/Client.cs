@@ -86,7 +86,7 @@ namespace ClientPMNR {
             indexExtraNL = split.IndexOf(Environment.NewLine, mySplitsSize);
 
             int splitLength = indexExtraNL - indexFirstNL;
-
+            // TODO: Senao existir um newline no meio do split (que ja vimos que acontece) a logica esta mal
             if (splitLength > 0) {
                 split = split.Substring(indexFirstNL, splitLength);
             } else {

@@ -68,6 +68,7 @@ namespace WorkerPMNR {
             IList<KeyValuePair<string, string>> result = new List<KeyValuePair<string, string>>();
             int newLineSize = Environment.NewLine.Length;
             foreach (string line in split) {
+                Console.WriteLine("Line:" + line + ";");
                 result = result.Concat(processLine(line)).ToList();
             }
             return result;
@@ -289,7 +290,7 @@ namespace WorkerPMNR {
 
             totalNodes++;
             this.topologyID = mod((previousNodeID + 1), totalNodes);
-            Console.WriteLine("JoinBroadcast -> ID: " + this.topologyID + " totalNodes: " + this.totalNodes);
+            Console.WriteLine("JoinBroadcast -> ID: "+ /*this.id + ", topologyID: " +*/ this.topologyID + " totalNodes: " + this.totalNodes);
             if (stopID != this.topologyID) {
                 nextNode.JoinBroadcast(stopID, this.topologyID);
             }

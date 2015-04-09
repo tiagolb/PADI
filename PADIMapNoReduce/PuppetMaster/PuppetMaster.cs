@@ -21,39 +21,31 @@ namespace PuppetMasterPMNR {
     public class PuppetMaster {
 
         private PuppetMasterForm puppetMasterForm;
-        private int lastWorkerPort; 
         private IList<KeyValuePair<int, string>> workplace;
         private IList<string> puppetMasters;
-        private int port;  //Port where PM is running
+        private string host;
+        private int port;
         private RemotePuppetMaster remotePuppetMaster;
 
-        public PuppetMaster(PuppetMasterForm form) {
+        public PuppetMaster(PuppetMasterForm form, int port) {
             this.puppetMasterForm = form;
             this.puppetMasters = new List<string>();
             this.workplace = new List<KeyValuePair<int, string>>();
-            this.lastWorkerPort = 30001; //Hardcoded port
-            this.port = 20001; //Hardcoded port
+            this.host = "" + Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+            this.port = port;
 
-            TcpChannel channel = new TcpChannel(port);   //Hardcoded port
+            TcpChannel channel = new TcpChannel(port);
             ChannelServices.RegisterChannel(channel, false);
             remotePuppetMaster = new RemotePuppetMaster(this);
             RemotingServices.Marshal(remotePuppetMaster, "PM", typeof(RemotePuppetMasterInterface));
         }
 
 
-        public int GetLastPort() {
-            return lastWorkerPort;
+        public string GetURI() {
+            string uri = "tcp://" + host + ":" + this.port + "/PM";
+            return uri;
         }
 
-        public string GetURL() {
-            string host = "" + Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
-            string url = "tcp://" + host + ":" + 20001 + "/PM";
-            return url;
-        }
-
-        public void SetLastPort(int lastPort) {
-            this.lastWorkerPort = lastPort;
-        }
 
         public void AddPuppetMaster(string newPuppetMasterURL) {
             puppetMasters.Add(newPuppetMasterURL);
@@ -62,7 +54,7 @@ namespace PuppetMasterPMNR {
 
         public void WORKER(int id, string puppetMasterURL, string serviceURL, string entryURL) {
             Uri baseUri = new Uri(puppetMasterURL);
-            if (puppetMasterURL.Equals(GetURL()) || baseUri.IsLoopback) {
+            if (puppetMasterURL.Equals(GetURI()) || baseUri.IsLoopback) {
 
                 string[] args = { id.ToString(), serviceURL, entryURL };
 
@@ -106,9 +98,16 @@ namespace PuppetMasterPMNR {
         }
 
         public void STATUS() { 
-            //Makes all workers print their status        
+            //Makes each puppet master tell its workers to print status
+            foreach (string pmAddress in puppetMasters) {
+                RemotePuppetMasterInterface pm = (RemotePuppetMasterInterface)Activator.GetObject(typeof(RemotePuppetMasterInterface), pmAddress);
+                pm.PrintWorkerStatus();
+            }
+            //print worker status from this machine workers
+            printWorkerStatus();
         }
         
+
 
         public void SLOWW(int id, int secondsDelay) {
             string serviceURL = null;
@@ -153,6 +152,16 @@ namespace PuppetMasterPMNR {
                 pm.ReceiveWorker(workerID, serviceURL);
             }
         }
+
+        public void printWorkerStatus() {
+            foreach (KeyValuePair<int, string> k in workplace) {
+                Uri baseUri = new Uri(k.Value);
+                if (baseUri.Host.Equals(this.host)) {
+                    RemoteWorkerInterface rw = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), k.Value);
+                    //rw.PrintStatus();
+                }
+            }
+        }
     }
 
 
@@ -168,7 +177,6 @@ namespace PuppetMasterPMNR {
             string[] args = { id.ToString(), serviceURL, entryURL };
 
             Process p = new Process();
-            //Z:\\Documents\\GitHub\\PADI\\PADIMapNoReduce\\WorkerPMNR\\bin\\Debug\\WorkerPMNR.exe
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardOutput = false;
             p.StartInfo.RedirectStandardInput = false;
@@ -181,13 +189,16 @@ namespace PuppetMasterPMNR {
             puppetMaster.BroadcastNewWorker(id, serviceURL); //Advertises workerID , URL pair
         }
 
-        public int Connect(string newPuppetMasterURL) {
+        public void Connect(string newPuppetMasterURL) {
             puppetMaster.AddPuppetMaster(newPuppetMasterURL);
-            return puppetMaster.GetLastPort();
         }
 
         public void ReceiveWorker(int workerID, string serviceURL) {
             puppetMaster.ReceiveNewWorker(workerID, serviceURL);
+        }
+
+        public void PrintWorkerStatus() { 
+            puppetMaster.printWorkerStatus();
         }
 
     }

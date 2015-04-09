@@ -17,14 +17,14 @@ namespace PuppetMasterPMNR {
 
         PuppetMaster puppetMaster;
 
+        private string host;
+
         public PuppetMasterForm() {
             InitializeComponent();
-            puppetMaster = new PuppetMaster(this);
             
-            //Fill textbox of PuppetMasterServiceURL
-            string host = "" + Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
-            string url = "tcp://" + host + ":" + 20001 + "/PM";
-            tb_PuppetMasterURL.Text = url; 
+            //Fill textbox of PuppetMasterHost
+            host = "" + Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+            tb_puppetHost.Text = host; 
         }
 
         private void bt_script_Click(object sender, EventArgs e) {
@@ -103,12 +103,26 @@ namespace PuppetMasterPMNR {
         }
 
         private void bt_submitConfig_Click(object sender, EventArgs e) {
+
             using (StreamReader sr = File.OpenText(tb_configFileAddress.Text)) {
                 string address = String.Empty;
                 while ((address = sr.ReadLine()) != null) {
                     Uri baseUri = new Uri(address);
-                    if (!baseUri.IsLoopback && !address.Equals(puppetMaster.GetURL()))
+                    if (baseUri.IsLoopback || baseUri.Host.Equals(host)) {
+                        puppetMaster = new PuppetMaster(this, baseUri.Port);
+                        tb_PuppetMasterURL.Text = "tcp://" + host + ":" + baseUri.Port + "/PM";
+                    }
+                }
+            }
+      
+            using (StreamReader sr = File.OpenText(tb_configFileAddress.Text)) {
+                string address = String.Empty;
+                while ((address = sr.ReadLine()) != null) {
+                    Uri baseUri = new Uri(address);
+                    if (!baseUri.IsLoopback && !address.Equals(puppetMaster.GetURI())) {
                         puppetMaster.AddPuppetMaster(address);
+                        MessageBox.Show(address);
+                    }
                 }
             }
         }

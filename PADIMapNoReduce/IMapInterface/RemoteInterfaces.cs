@@ -29,7 +29,8 @@ namespace InterfacePMNR {
 
     public interface RemotePuppetMasterInterface {
         void CreateWorker(int id, string serviceURL, string entryURL);
-        int Connect(string newPuppetMasterURL);
+        void Connect(string newPuppetMasterURL);
         void ReceiveWorker(int workerID, string serviceURL);
+        void PrintWorkerStatus();
     }
 }

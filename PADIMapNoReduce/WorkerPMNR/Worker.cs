@@ -362,7 +362,7 @@ namespace WorkerPMNR {
             int extraSplits = mod(numberSplits, this.totalNodes);
 
             //BroadCast(0, bytesPerSplit, splitsPerMachine, extraBytes, extraSplits, code, className);
-            Broadcast(numLines, linesPerMachine, linesPerSplit, code, className);
+            //Broadcast(numLines, linesPerMachine, linesPerSplit, code, className);
         }
 
 

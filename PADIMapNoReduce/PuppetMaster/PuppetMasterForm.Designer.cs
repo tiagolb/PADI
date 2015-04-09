@@ -38,27 +38,30 @@
             this.tb_configFileAddress = new System.Windows.Forms.TextBox();
             this.tb_configFileName = new System.Windows.Forms.TextBox();
             this.bt_openConfig = new System.Windows.Forms.Button();
+            this.tb_puppetHost = new System.Windows.Forms.TextBox();
+            this.lb_puppetHost = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // lb_PuppetMasterURL
             // 
             this.lb_PuppetMasterURL.AutoSize = true;
-            this.lb_PuppetMasterURL.Location = new System.Drawing.Point(13, 13);
+            this.lb_PuppetMasterURL.Location = new System.Drawing.Point(13, 64);
             this.lb_PuppetMasterURL.Name = "lb_PuppetMasterURL";
-            this.lb_PuppetMasterURL.Size = new System.Drawing.Size(143, 13);
+            this.lb_PuppetMasterURL.Size = new System.Drawing.Size(140, 13);
             this.lb_PuppetMasterURL.TabIndex = 0;
-            this.lb_PuppetMasterURL.Text = "Puppet Master Service URL:";
+            this.lb_PuppetMasterURL.Text = "Puppet Master Service URI:";
             // 
             // tb_PuppetMasterURL
             // 
-            this.tb_PuppetMasterURL.Location = new System.Drawing.Point(162, 6);
+            this.tb_PuppetMasterURL.Enabled = false;
+            this.tb_PuppetMasterURL.Location = new System.Drawing.Point(162, 57);
             this.tb_PuppetMasterURL.Name = "tb_PuppetMasterURL";
             this.tb_PuppetMasterURL.Size = new System.Drawing.Size(489, 20);
             this.tb_PuppetMasterURL.TabIndex = 1;
             // 
             // bt_script
             // 
-            this.bt_script.Location = new System.Drawing.Point(16, 68);
+            this.bt_script.Location = new System.Drawing.Point(16, 221);
             this.bt_script.Name = "bt_script";
             this.bt_script.Size = new System.Drawing.Size(75, 23);
             this.bt_script.TabIndex = 4;
@@ -72,21 +75,21 @@
             // 
             // tb_scriptFileName
             // 
-            this.tb_scriptFileName.Location = new System.Drawing.Point(98, 70);
+            this.tb_scriptFileName.Location = new System.Drawing.Point(98, 223);
             this.tb_scriptFileName.Name = "tb_scriptFileName";
             this.tb_scriptFileName.Size = new System.Drawing.Size(553, 20);
             this.tb_scriptFileName.TabIndex = 5;
             // 
             // tb_scriptFileAddress
             // 
-            this.tb_scriptFileAddress.Location = new System.Drawing.Point(16, 98);
+            this.tb_scriptFileAddress.Location = new System.Drawing.Point(16, 251);
             this.tb_scriptFileAddress.Name = "tb_scriptFileAddress";
             this.tb_scriptFileAddress.Size = new System.Drawing.Size(635, 20);
             this.tb_scriptFileAddress.TabIndex = 6;
             // 
             // bt_submitScript
             // 
-            this.bt_submitScript.Location = new System.Drawing.Point(657, 70);
+            this.bt_submitScript.Location = new System.Drawing.Point(657, 223);
             this.bt_submitScript.Name = "bt_submitScript";
             this.bt_submitScript.Size = new System.Drawing.Size(115, 48);
             this.bt_submitScript.TabIndex = 8;
@@ -96,15 +99,15 @@
             // 
             // tb_singleCommand
             // 
-            this.tb_singleCommand.Location = new System.Drawing.Point(107, 168);
+            this.tb_singleCommand.Location = new System.Drawing.Point(98, 295);
             this.tb_singleCommand.Name = "tb_singleCommand";
-            this.tb_singleCommand.Size = new System.Drawing.Size(535, 20);
+            this.tb_singleCommand.Size = new System.Drawing.Size(553, 20);
             this.tb_singleCommand.TabIndex = 9;
             // 
             // lb_singleCommand
             // 
             this.lb_singleCommand.AutoSize = true;
-            this.lb_singleCommand.Location = new System.Drawing.Point(15, 171);
+            this.lb_singleCommand.Location = new System.Drawing.Point(6, 298);
             this.lb_singleCommand.Name = "lb_singleCommand";
             this.lb_singleCommand.Size = new System.Drawing.Size(86, 13);
             this.lb_singleCommand.TabIndex = 10;
@@ -112,7 +115,7 @@
             // 
             // bt_singleCommand
             // 
-            this.bt_singleCommand.Location = new System.Drawing.Point(648, 165);
+            this.bt_singleCommand.Location = new System.Drawing.Point(657, 292);
             this.bt_singleCommand.Name = "bt_singleCommand";
             this.bt_singleCommand.Size = new System.Drawing.Size(115, 23);
             this.bt_singleCommand.TabIndex = 11;
@@ -126,7 +129,7 @@
             // 
             // bt_submitConfig
             // 
-            this.bt_submitConfig.Location = new System.Drawing.Point(657, 247);
+            this.bt_submitConfig.Location = new System.Drawing.Point(657, 121);
             this.bt_submitConfig.Name = "bt_submitConfig";
             this.bt_submitConfig.Size = new System.Drawing.Size(115, 48);
             this.bt_submitConfig.TabIndex = 16;
@@ -136,21 +139,21 @@
             // 
             // tb_configFileAddress
             // 
-            this.tb_configFileAddress.Location = new System.Drawing.Point(16, 275);
+            this.tb_configFileAddress.Location = new System.Drawing.Point(16, 149);
             this.tb_configFileAddress.Name = "tb_configFileAddress";
             this.tb_configFileAddress.Size = new System.Drawing.Size(635, 20);
             this.tb_configFileAddress.TabIndex = 15;
             // 
             // tb_configFileName
             // 
-            this.tb_configFileName.Location = new System.Drawing.Point(98, 247);
+            this.tb_configFileName.Location = new System.Drawing.Point(98, 121);
             this.tb_configFileName.Name = "tb_configFileName";
             this.tb_configFileName.Size = new System.Drawing.Size(553, 20);
             this.tb_configFileName.TabIndex = 14;
             // 
             // bt_openConfig
             // 
-            this.bt_openConfig.Location = new System.Drawing.Point(16, 245);
+            this.bt_openConfig.Location = new System.Drawing.Point(16, 119);
             this.bt_openConfig.Name = "bt_openConfig";
             this.bt_openConfig.Size = new System.Drawing.Size(75, 23);
             this.bt_openConfig.TabIndex = 13;
@@ -158,11 +161,30 @@
             this.bt_openConfig.UseVisualStyleBackColor = true;
             this.bt_openConfig.Click += new System.EventHandler(this.bt_openConfig_Click);
             // 
+            // tb_puppetHost
+            // 
+            this.tb_puppetHost.Enabled = false;
+            this.tb_puppetHost.Location = new System.Drawing.Point(162, 12);
+            this.tb_puppetHost.Name = "tb_puppetHost";
+            this.tb_puppetHost.Size = new System.Drawing.Size(489, 20);
+            this.tb_puppetHost.TabIndex = 18;
+            // 
+            // lb_puppetHost
+            // 
+            this.lb_puppetHost.AutoSize = true;
+            this.lb_puppetHost.Location = new System.Drawing.Point(13, 19);
+            this.lb_puppetHost.Name = "lb_puppetHost";
+            this.lb_puppetHost.Size = new System.Drawing.Size(148, 13);
+            this.lb_puppetHost.TabIndex = 17;
+            this.lb_puppetHost.Text = "Puppet Master Host Machine:";
+            // 
             // PuppetMasterForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(784, 562);
+            this.Controls.Add(this.tb_puppetHost);
+            this.Controls.Add(this.lb_puppetHost);
             this.Controls.Add(this.bt_submitConfig);
             this.Controls.Add(this.tb_configFileAddress);
             this.Controls.Add(this.tb_configFileName);
@@ -200,6 +222,8 @@
         private System.Windows.Forms.TextBox tb_configFileAddress;
         private System.Windows.Forms.TextBox tb_configFileName;
         private System.Windows.Forms.Button bt_openConfig;
+        private System.Windows.Forms.TextBox tb_puppetHost;
+        private System.Windows.Forms.Label lb_puppetHost;
     }
 }
 

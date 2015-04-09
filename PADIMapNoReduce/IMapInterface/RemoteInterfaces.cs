@@ -14,6 +14,8 @@ namespace InterfacePMNR {
 
     public interface RemoteWorkerInterface {
         void JobMetaData(int numberSplits, int numLines, byte[] code, string className);
+        // Tentar passar apenas beginPos, fileSize e nSplits
+        //void BroadCast(int beginPos, int bytesPerSplit, int splitsPerMachine, int extraBytes, int extraSplits, byte[] code, string className); 
         void Broadcast(int remainingLines, int linesPerMachine, int linesPerSplit, byte[] code, string className);
         int[] Connect(string workerURL);
         void JoinBroadcast(int stopID, int previousNodeID);

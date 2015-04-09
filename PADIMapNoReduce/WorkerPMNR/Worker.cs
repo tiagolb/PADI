@@ -221,55 +221,73 @@ namespace WorkerPMNR {
             return lines;
         }
 
-        /* private IList<string> getLinesFromBytes(byte[] bytes, int bytesPerSplit, bool first) {
-             IList<string> lines = new List<string>();
-             string splitsString = System.Text.Encoding.ASCII.GetString(bytes);
-             int beginPos;
-             int lengthOfSplit;
-             string split;
-             int newLineSize = Environment.NewLine.Length;
+        /*private IList<string> getLinesFromBytes(byte[] bytes, IList<KeyValuePair<int, int>> splits, bool first) {
+            IList<string> lines = new List<string>();
+            string splitsString = System.Text.Encoding.ASCII.GetString(bytes);
+            int splitsBegin = splits[0].Key;
+            int beginPos;
+            int lengthOfSplit;
+            string split;
+            int newLineSize = Environment.NewLine.Length;
+            int beginSplit;
+            int endSplit;
 
-             if (first) {
-                 beginPos = 0;
-             }
-             else {
-                 beginPos = splitsString.IndexOf(Environment.NewLine) + newLineSize;
-             }
-             splitsString = splitsString.Substring(beginPos);
-             int length = splitsString.Length;
-             while (length > 0) {
-                 // Stop condition
-                 if (length < bytesPerSplit) {
-                     lines.Add(splitsString);
-                     return lines;
-                 }
+            if (first) {
+                beginPos = 0;
+            }
+            else {
+                beginPos = splitsString.IndexOf(Environment.NewLine) + newLineSize;
+            }
+            splitsString = splitsString.Substring(beginPos);
+            //int length = splitsString.Length;
+            for (int i = 0; i < splits.Count; i++) {
+                beginSplit = splits[i].Key - splitsBegin;
+                // First split
+                if (splits[i].Key != 0) {
+                    beginSplit = splitsString.IndexOf(Environment.NewLine, beginSplit) + newLineSize;
+                }
+                endSplit = splits[i].Value - splitsBegin;
+                lengthOfSplit = splitsString.IndexOf(Environment.NewLine, endSplit);
+                if (lengthOfSplit > 0) {
+                    lengthOfSplit -= beginSplit;
+                    split = splitsString.Substring(beginSplit, lengthOfSplit);
+                }
+                else {
+                    // Last line
+                    split = splitsString.Substring(beginSplit);
+                }
+                lines.Add(split);
+            }
+            return lines;
+        }*/
 
-                 // new line after end of split
-                 if(bytesPerSplit >= length/2)  //Heuristic
-                     lengthOfSplit = splitsString.IndexOf(Environment.NewLine, bytesPerSplit-bytesPerSplit/2);  
-                 else
-                     lengthOfSplit = splitsString.IndexOf(Environment.NewLine, bytesPerSplit);
-                
-                 Console.WriteLine("Comprimento do Split: " +lengthOfSplit);
+        /*public void BroadCast(int beginPos, int bytesPerSplit, int splitsPerMachine, int extraBytes, int extraSplits, byte[] code, string className) {
+            IList<KeyValuePair<int, int>> splits = new List<KeyValuePair<int, int>>();
+            int extraSplit = 0;
+            if (extraSplits > 0) {
+                extraSplit = 1;
+                extraSplits--;
+            }
+            int mySplits = splitsPerMachine + extraSplit;
+            int endPos = 0;
+            for (int i = 0; i < mySplits; i++) {
+                if (extraBytes > 0) {
+                    endPos = beginPos + bytesPerSplit + 1;
+                    extraBytes--;
+                }
+                else {
+                    endPos = beginPos + bytesPerSplit;
+                }
+                splits.Add(new KeyValuePair<int, int>(beginPos, endPos));
+                beginPos = endPos + 1;
+            }
 
-                 if (lengthOfSplit > 0) {
-                     split = splitsString.Substring(0, lengthOfSplit);
-                     lengthOfSplit += newLineSize;
-                     splitsString = splitsString.Substring(lengthOfSplit);
-                 }
-                 else {
-                     // Last line
-                     split = splitsString.Substring(0);
-                     splitsString = "";
-                 }
-                 lines.Add(split);
+            workerThread = new Thread(() => processSplitsThread(bytesPerSplit, begin, first, splitsPerMachine, firstSplit, bytesToRequest));
+            workerThread.Start();
 
-                 length = splitsString.Length;
-                 Console.WriteLine("O que falta: " + length);
-             }
-             return lines;
-         }
-         */
+            nextNode.BroadCast(beginPos, bytesPerSplit, splitsPerMachine, extraBytes, extraSplits, code, className);
+        }*/
+
         public void Broadcast(int remainingBytes, int bytesPerMachine, int bytesPerSplit, byte[] code, string className) {
             Console.WriteLine("remainingBytes: " + remainingBytes + ". bytesPerMachine: " + bytesPerMachine + ". BytesPerSplit: " + bytesPerSplit);
             int begin = topologyID * bytesPerMachine;
@@ -293,6 +311,16 @@ namespace WorkerPMNR {
             workerThread = new Thread(() => processSplitsThread(bytesPerSplit, begin, first, splitsPerMachine, firstSplit, bytesToRequest));
             workerThread.Start();
         }
+
+        /*private void processSplitsThread(IList<KeyValuePair<int, int>> splits, int firstSplit) {
+            IList<KeyValuePair<string, string>> processedSplit;
+            int beginPos = splits[0].Key;
+            int endPos = splits[splits.Count - 1].Value;
+            bool first = beginPos == 0;
+            byte[] bytes = client.getSplit(beginPos, endPos);
+
+            IList<string> splitsToProcess = getLinesFromBytes(bytes, splits, first);
+        }*/
 
         private void processSplitsThread(int bytesPerSplit, int begin, bool first, int splitsPerMachine, int firstSplit, int bytesToRequest) {
             IList<KeyValuePair<string, string>> processedSplit;
@@ -325,9 +353,15 @@ namespace WorkerPMNR {
             Console.WriteLine("JobMetaData");
             //worker = new Worker(code, className);
             this.numberSplits = numberSplits;
-            int linesPerMachine = numLines / totalNodes;
-            int linesPerSplit = numLines / numberSplits;
+            double bps = numLines / numberSplits;
+            int bytesPerSplit = (int)Math.Floor(bps);
+            int extraBytes = mod(numLines, numberSplits);
 
+            double spm = numberSplits / this.totalNodes;
+            int splitsPerMachine = (int)Math.Floor(spm);
+            int extraSplits = mod(numberSplits, this.totalNodes);
+
+            //BroadCast(0, bytesPerSplit, splitsPerMachine, extraBytes, extraSplits, code, className);
             Broadcast(numLines, linesPerMachine, linesPerSplit, code, className);
         }
 

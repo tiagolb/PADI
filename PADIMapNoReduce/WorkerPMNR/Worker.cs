@@ -98,7 +98,6 @@ namespace WorkerPMNR {
         private int totalNodes;
         private int id;
         private int topologyID;
-        private int numberSplits;
         private Worker worker;
         private RemoteWorkerInterface nextNode;
         private RemoteClientInterface client;

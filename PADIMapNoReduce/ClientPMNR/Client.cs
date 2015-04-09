@@ -58,19 +58,37 @@ namespace ClientPMNR {
          * getSplit receives begin and end position of the file byte array
          * return byte array from begin to end
          */
-        public byte[] getSplit(int begin, int end) {
-            int splitSize = end - begin;
-            byte[] split = new byte[splitSize];
+        public byte[] getSplits(int begin, int end, int extraSplitSize) {
+            int mySplitsSize = end - begin;
+            int bytesToRead = mySplitsSize + extraSplitSize;
+
+            byte[] splitBytes = new byte[bytesToRead];
 
             lock (thisLock) {
                 using (BinaryReader reader = new BinaryReader(new FileStream(Client.inputFile, FileMode.Open))) {
                     reader.BaseStream.Seek(begin, SeekOrigin.Begin);
-                    reader.Read(split, 0, splitSize);
+                    reader.Read(splitBytes, 0, bytesToRead);
                     reader.Close();
                 }
             }
 
-            return split;
+            string split = System.Text.Encoding.ASCII.GetString(splitBytes);
+            int indexFirstNL, indexExtraNL;
+            if (begin != 0) {
+                indexFirstNL = split.IndexOf(Environment.NewLine) + Environment.NewLine.Length;
+            } else {
+                indexFirstNL = 0;
+            }
+            indexExtraNL = split.IndexOf(Environment.NewLine, mySplitsSize);
+
+            int splitLength = indexExtraNL - indexFirstNL;
+
+            if (splitLength > 0) {
+                split = split.Substring(indexFirstNL, splitLength);
+            } else {
+                split = split.Substring(indexFirstNL);
+            }
+            return System.Text.Encoding.ASCII.GetBytes(split);
         }
 
         /*

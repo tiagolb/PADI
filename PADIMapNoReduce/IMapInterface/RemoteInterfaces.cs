@@ -7,16 +7,14 @@ using System.Threading.Tasks;
 namespace InterfacePMNR {
     public interface RemoteClientInterface {
        //IList<string> getSplit(int begin, int end);
-        byte[] getSplit(int begin, int end);
+        byte[] getSplits(int begin, int end, int extraSplit);
         //void sendProcessedSplit(IList<KeyValuePair<string, string>> result, int splitId);
         void sendProcessedSplit(string result, int splitId);
     }
 
     public interface RemoteWorkerInterface {
         void JobMetaData(int numberSplits, int numLines, byte[] code, string className);
-        // Tentar passar apenas beginPos, fileSize e nSplits
-        //void BroadCast(int beginPos, int bytesPerSplit, int splitsPerMachine, int extraBytes, int extraSplits, byte[] code, string className); 
-        void Broadcast(int remainingLines, int linesPerMachine, int linesPerSplit, byte[] code, string className);
+        void Broadcast(int stopID, int begin, int firstSplit, int bytesPerSplit, int extraBytes, int splitsPerMachine, int extraSplits, byte[] code, string className);
         int[] Connect(string workerURL);
         void JoinBroadcast(int stopID, int previousNodeID);
         //void RemoveBroadcast();

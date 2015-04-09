@@ -64,28 +64,10 @@ namespace WorkerPMNR {
             }
         }
 
-        public IList<KeyValuePair<string, string>> processSplit(string split) {
+        public IList<KeyValuePair<string, string>> processSplit(IList<string> split) {
             IList<KeyValuePair<string, string>> result = new List<KeyValuePair<string, string>>();
-            int index;
             int newLineSize = Environment.NewLine.Length;
-            IList<string> lines = new List<string>();
-            while (split.Length > 0) {
-                index = split.IndexOf(Environment.NewLine);
-                if (index > 0) {
-                    lines.Add(split.Substring(0, index));
-                    split = split.Substring(index + newLineSize);
-                }
-                else {
-                    lines.Add(split);
-                    split = "";
-                }
-            }
-
-            foreach (string line in lines) {
-                //Console.WriteLine("Line: " + line);
-                /*foreach (KeyValuePair<string, string> pair in processLine(line)) {
-                    Console.WriteLine("Pro Line: " + pair.Key + " " + pair.Value);
-                }*/
+            foreach (string line in split) {
                 result = result.Concat(processLine(line)).ToList();
             }
             return result;
@@ -171,198 +153,101 @@ namespace WorkerPMNR {
             return (x % m + m) % m;
         }
 
+        public void Broadcast(int stopID, int begin, int firstSplit, int bytesPerSplit, int extraBytes, int splitsPerMachine, int extraSplits, byte[] code, string className) {
 
-        private IList<string> getLinesFromBytes(byte[] bytes, int bytesPerSplit, bool first) {
-            IList<string> lines = new List<string>();
-            string splitsString = System.Text.Encoding.ASCII.GetString(bytes);
-            int beginPos;
-            int lengthOfSplit;
-            string split;
-            int newLineSize = Environment.NewLine.Length;
-
-            if (first) {
-                beginPos = 0;
-            }
-            else {
-                beginPos = splitsString.IndexOf(Environment.NewLine) + newLineSize;
-            }
-            splitsString = splitsString.Substring(beginPos);
-            int length = splitsString.Length;
-            while (length > 0) {
-                // Stop condition
-                if (length < bytesPerSplit) {
-                    lines.Add(splitsString);
-                    return lines;
-                }
-
-                // new line after end of split
-                if (bytesPerSplit >= length / 2)  //Heuristic
-                    lengthOfSplit = splitsString.IndexOf(Environment.NewLine, bytesPerSplit - bytesPerSplit / 2);
-                else
-                    lengthOfSplit = splitsString.IndexOf(Environment.NewLine, bytesPerSplit);
-
-                Console.WriteLine("Comprimento do Split: " + lengthOfSplit);
-
-                if (lengthOfSplit > 0) {
-                    split = splitsString.Substring(0, lengthOfSplit);
-                    lengthOfSplit += newLineSize;
-                    splitsString = splitsString.Substring(lengthOfSplit);
-                }
-                else {
-                    // Last line
-                    split = splitsString.Substring(0);
-                    splitsString = "";
-                }
-                lines.Add(split);
-
-                length = splitsString.Length;
-                Console.WriteLine("O que falta: " + length);
-            }
-            return lines;
-        }
-
-        /*private IList<string> getLinesFromBytes(byte[] bytes, IList<KeyValuePair<int, int>> splits, bool first) {
-            IList<string> lines = new List<string>();
-            string splitsString = System.Text.Encoding.ASCII.GetString(bytes);
-            int splitsBegin = splits[0].Key;
-            int beginPos;
-            int lengthOfSplit;
-            string split;
-            int newLineSize = Environment.NewLine.Length;
-            int beginSplit;
-            int endSplit;
-
-            if (first) {
-                beginPos = 0;
-            }
-            else {
-                beginPos = splitsString.IndexOf(Environment.NewLine) + newLineSize;
-            }
-            splitsString = splitsString.Substring(beginPos);
-            //int length = splitsString.Length;
-            for (int i = 0; i < splits.Count; i++) {
-                beginSplit = splits[i].Key - splitsBegin;
-                // First split
-                if (splits[i].Key != 0) {
-                    beginSplit = splitsString.IndexOf(Environment.NewLine, beginSplit) + newLineSize;
-                }
-                endSplit = splits[i].Value - splitsBegin;
-                lengthOfSplit = splitsString.IndexOf(Environment.NewLine, endSplit);
-                if (lengthOfSplit > 0) {
-                    lengthOfSplit -= beginSplit;
-                    split = splitsString.Substring(beginSplit, lengthOfSplit);
-                }
-                else {
-                    // Last line
-                    split = splitsString.Substring(beginSplit);
-                }
-                lines.Add(split);
-            }
-            return lines;
-        }*/
-
-        /*public void BroadCast(int beginPos, int bytesPerSplit, int splitsPerMachine, int extraBytes, int extraSplits, byte[] code, string className) {
-            IList<KeyValuePair<int, int>> splits = new List<KeyValuePair<int, int>>();
-            int extraSplit = 0;
-            if (extraSplits > 0) {
-                extraSplit = 1;
-                extraSplits--;
-            }
-            int mySplits = splitsPerMachine + extraSplit;
-            int endPos = 0;
-            for (int i = 0; i < mySplits; i++) {
-                if (extraBytes > 0) {
-                    endPos = beginPos + bytesPerSplit + 1;
-                    extraBytes--;
-                }
-                else {
-                    endPos = beginPos + bytesPerSplit;
-                }
-                splits.Add(new KeyValuePair<int, int>(beginPos, endPos));
-                beginPos = endPos + 1;
-            }
-
-            workerThread = new Thread(() => processSplitsThread(bytesPerSplit, begin, first, splitsPerMachine, firstSplit, bytesToRequest));
-            workerThread.Start();
-
-            nextNode.BroadCast(beginPos, bytesPerSplit, splitsPerMachine, extraBytes, extraSplits, code, className);
-        }*/
-
-        public void Broadcast(int remainingBytes, int bytesPerMachine, int bytesPerSplit, byte[] code, string className) {
-            Console.WriteLine("remainingBytes: " + remainingBytes + ". bytesPerMachine: " + bytesPerMachine + ". BytesPerSplit: " + bytesPerSplit);
-            int begin = topologyID * bytesPerMachine;
-            bool first = (topologyID == 0);
-            int splitsPerMachine = bytesPerMachine / bytesPerSplit;
+            // init worker for each job
             worker = new Worker(code, className);
 
-            //ID of first split, ID starts with 1
-            int firstSplit = topologyID * splitsPerMachine + 1;
+            int numberSplits = splitsPerMachine;
+            if (extraSplits > 0) {
+                extraSplits--;
+                numberSplits++;
+            }
+            int correctedBytesPerMachine = bytesPerSplit * numberSplits;
 
-            // We want to request all our lines plus the next split
-            int bytesToRequest = bytesPerMachine + bytesPerSplit;
-
-            if (remainingBytes < bytesToRequest) {
-                bytesToRequest = remainingBytes;
-            } else {
-                remainingBytes -= bytesPerMachine;
-                nextNode.Broadcast(remainingBytes, bytesPerMachine, bytesPerSplit, code, className);
+            if (extraBytes > 0) {
+                if (extraBytes >= splitsPerMachine) {
+                    correctedBytesPerMachine += splitsPerMachine;
+                    extraBytes -= splitsPerMachine;
+                } else {
+                    correctedBytesPerMachine += extraBytes;
+                    extraBytes = 0;
+                }
             }
 
-            workerThread = new Thread(() => processSplitsThread(bytesPerSplit, begin, first, splitsPerMachine, firstSplit, bytesToRequest));
+            int end = begin + correctedBytesPerMachine;
+            byte[] splits = this.client.getSplits(begin, end, bytesPerSplit);
+
+            begin = end + 1;
+            //this.nextNode.Broadcast(begin, bytesPerSplit, extraBytes, splitsPerMachine, extraSplits, code, className);
+
+            if (this.topologyID != stopID) {
+                Thread broadcastThread = new Thread(() => this.nextNode.Broadcast(stopID, begin, firstSplit + numberSplits, bytesPerSplit, extraBytes, splitsPerMachine, extraSplits, code, className));
+                broadcastThread.Start();
+            }
+
+            workerThread = new Thread(() => processSplitsThread(splits, numberSplits, firstSplit));
             workerThread.Start();
         }
 
-        /*private void processSplitsThread(IList<KeyValuePair<int, int>> splits, int firstSplit) {
+
+        private void processSplitsThread(byte[] splitsBytes, int myNumberSplits, int firstSplit) {
+            IList<IList<string>> splits = new List<IList<string>>();
+
+            string splitText = System.Text.Encoding.ASCII.GetString(splitsBytes);
+
+            string[] splitLines = splitText.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            IList<string> splitLinesList = new List<string>(splitLines);
+
+            int linesPerSplit = splitLines.Count() / myNumberSplits;
+            for (int i = 0; i < myNumberSplits - 1; i++) { // para o ultimo receber fora
+                IList<string> split = new List<string>();
+                for (int j = 0; j < linesPerSplit; j++) {
+                    split.Add(splitLinesList[0]);
+                    splitLinesList.RemoveAt(0);
+                }
+                splits.Add(split);
+            }
+
+            //ultimo split
+            IList<string> lastSplit = new List<string>();
+            foreach (string line in splitLinesList) {
+                lastSplit.Add(line);
+            }
+            splits.Add(lastSplit);
+
+            //PROCESS
             IList<KeyValuePair<string, string>> processedSplit;
-            int beginPos = splits[0].Key;
-            int endPos = splits[splits.Count - 1].Value;
-            bool first = beginPos == 0;
-            byte[] bytes = client.getSplit(beginPos, endPos);
-
-            IList<string> splitsToProcess = getLinesFromBytes(bytes, splits, first);
-        }*/
-
-        private void processSplitsThread(int bytesPerSplit, int begin, bool first, int splitsPerMachine, int firstSplit, int bytesToRequest) {
-            IList<KeyValuePair<string, string>> processedSplit;
-            int end = begin + bytesToRequest;
-            //Console.WriteLine("Before Client");
-            byte[] bytes = client.getSplit(begin, end);
-            //Console.WriteLine("After Client: " + System.Text.Encoding.ASCII.GetString(bytes));
-            //Console.WriteLine("Split: " + System.Text.Encoding.ASCII.GetString(bytes));
-
-            IList<string> splits = getLinesFromBytes(bytes, bytesPerSplit, first);
-            Console.WriteLine(splits.Count);
-            //Console.WriteLine("BeforeSend");
-            int splitId;
-            for (int i = 0; (i < splitsPerMachine && i < splits.Count); i++) {
-                splitId = firstSplit + i;
+            int splitId = firstSplit;
+            
+            foreach (IList<string> split in splits) {
                 string result = "";
-                processedSplit = worker.processSplit(splits[i]);
-                //Console.WriteLine(processedSplit.ToString());
-                //Console.WriteLine("Split: " + processedSplit[0].Key + "\r\n" + processedSplit[0].Value + "\r\n");
+                processedSplit = worker.processSplit(split);
                 foreach (KeyValuePair<string, string> pair in processedSplit) {
                     result += pair.Key + " : " + pair.Value + Environment.NewLine;
                 }
                 Console.WriteLine("Result: " + result);
                 Console.WriteLine("SentSplit " + splitId);
                 client.sendProcessedSplit(result, splitId);
+                splitId++;
             }
         }
 
-        public void JobMetaData(int numberSplits, int numLines, byte[] code, string className) {
-            Console.WriteLine("JobMetaData");
-            //worker = new Worker(code, className);
-            this.numberSplits = numberSplits;
-            double bps = numLines / numberSplits;
-            int bytesPerSplit = (int)Math.Floor(bps);
-            int extraBytes = mod(numLines, numberSplits);
+        public void JobMetaData(int numberSplits, int nBytes, byte[] code, string className) {
+            //Console.WriteLine("JobMetaData -> " + numberSplits);
 
-            double spm = numberSplits / this.totalNodes;
-            int splitsPerMachine = (int)Math.Floor(spm);
+            int bytesPerSplit = nBytes / numberSplits;
+            int extraBytes = mod(nBytes, numberSplits);
+
+            int splitsPerMachine = numberSplits / this.totalNodes;
             int extraSplits = mod(numberSplits, this.totalNodes);
 
-            //BroadCast(0, bytesPerSplit, splitsPerMachine, extraBytes, extraSplits, code, className);
-            //Broadcast(numLines, linesPerMachine, linesPerSplit, code, className);
+            int stopID = 0;
+            if (nextNode != null) {   //Compute the ID of the node that shall stop broadcasting
+                stopID = mod((this.topologyID - 1), totalNodes);
+            }
+
+            Broadcast(stopID, 0 /* begin */, 1 /* split id */, bytesPerSplit, extraBytes, splitsPerMachine, extraSplits, code, className);
         }
 
 
@@ -374,7 +259,7 @@ namespace WorkerPMNR {
             int[] connectionData = remoteWorkerConnector.Connect(newNodeURL);
             this.topologyID = connectionData[0];
             this.totalNodes = connectionData[1];
-            Console.WriteLine("ID: " + this.id + " TopologyID: " + this.topologyID + " totalNodes: " + this.totalNodes);
+            Console.WriteLine("ConnectToChain -> ID: " + this.id + " TopologyID: " + this.topologyID + " totalNodes: " + this.totalNodes);
         }
 
 
@@ -392,7 +277,7 @@ namespace WorkerPMNR {
             nextNode.SetNextNodeURL(nextNodeURL);
             nextNode.SetCurrentNextNodeURL(nextNodeURL);
             nextNodeURL = workerURL;
-            Console.WriteLine("ID: " + this.id + " TopologyID: " + this.topologyID + " totalNodes: " + this.totalNodes);
+            Console.WriteLine("Connect -> ID: " + this.id + " TopologyID: " + this.topologyID + " totalNodes: " + this.totalNodes);
             //Returns to the new Node it's ID and Total Nodes in the ring
             return new int[] { topologyID + 1, totalNodes };
         }
@@ -405,7 +290,7 @@ namespace WorkerPMNR {
 
             totalNodes++;
             this.topologyID = mod((previousNodeID + 1), totalNodes);
-            Console.WriteLine("ID: " + this.topologyID + " totalNodes: " + this.totalNodes);
+            Console.WriteLine("JoinBroadcast -> ID: " + this.topologyID + " totalNodes: " + this.totalNodes);
             if (stopID != this.topologyID) {
                 nextNode.JoinBroadcast(stopID, this.topologyID);
             }

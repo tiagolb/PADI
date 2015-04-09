@@ -54,6 +54,15 @@ namespace PuppetMasterPMNR {
 
         public void WORKER(int id, string puppetMasterURL, string serviceURL, string entryURL) {
             Uri baseUri = new Uri(puppetMasterURL);
+            Uri sUri = new Uri(serviceURL);
+            if (sUri.IsLoopback)
+                serviceURL = "tcp://" + this.host + ":" + sUri.Port + "/W";
+            if (entryURL != "NOENTRYPOINT") {
+                Uri epUri = new Uri(entryURL);
+                if (epUri.IsLoopback)
+                    entryURL = "tcp://" + this.host + ":" + epUri.Port + "/W";
+            }
+
             if (puppetMasterURL.Equals(GetURI()) || baseUri.IsLoopback) {
 
                 string[] args = { id.ToString(), serviceURL, entryURL };

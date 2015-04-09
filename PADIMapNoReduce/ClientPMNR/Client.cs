@@ -8,6 +8,8 @@ using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using InterfacePMNR;
+using System.Net;
+using System.Net.Sockets;
 
 
 namespace ClientPMNR {
@@ -15,7 +17,7 @@ namespace ClientPMNR {
 
         private RemoteWorkerInterface remoteWorker;
         private TcpChannel channel;
-        private string url = "tcp://localhost:10001/C";
+        private string url;
         // TODO: We need to access this from remoteClient
         public static string inputFile;
         public static string outputFolder;
@@ -26,6 +28,8 @@ namespace ClientPMNR {
             // It should work but says we already registered a channel named 'tcp'
             //ChannelServices.RegisterChannel(channel, false);
             RemotingConfiguration.RegisterWellKnownServiceType(typeof(RemoteClient), "C", WellKnownObjectMode.SingleCall);
+            url = "tcp://" + Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+            url += ":10001/C";
             remoteWorker.SetClientURL(url);
 
         }

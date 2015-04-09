@@ -68,7 +68,7 @@ namespace WorkerPMNR {
             IList<KeyValuePair<string, string>> result = new List<KeyValuePair<string, string>>();
             int newLineSize = Environment.NewLine.Length;
             foreach (string line in split) {
-                Console.WriteLine("Line:" + line + ";");
+                //Console.WriteLine("Line:" + line + ";");
                 result = result.Concat(processLine(line)).ToList();
             }
             return result;
@@ -243,11 +243,11 @@ namespace WorkerPMNR {
             int splitsPerMachine = numberSplits / this.totalNodes;
             int extraSplits = mod(numberSplits, this.totalNodes);
 
-            Console.WriteLine("JobMetaData NSplits -> " + numberSplits);
-            Console.WriteLine("JobMetaData bps-> " + bytesPerSplit);
-            Console.WriteLine("JobMetaData eb-> " + extraBytes);
-            Console.WriteLine("JobMetaData spm-> " + splitsPerMachine);
-            Console.WriteLine("JobMetaData es-> " + extraSplits);
+            //Console.WriteLine("JobMetaData NSplits -> " + numberSplits);
+            //Console.WriteLine("JobMetaData bps-> " + bytesPerSplit);
+            //Console.WriteLine("JobMetaData eb-> " + extraBytes);
+            //Console.WriteLine("JobMetaData spm-> " + splitsPerMachine);
+            //Console.WriteLine("JobMetaData es-> " + extraSplits);
             
             int stopID = 0;
             if (nextNode != null) {   //Compute the ID of the node that shall stop broadcasting

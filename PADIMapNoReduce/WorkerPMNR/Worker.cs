@@ -176,6 +176,9 @@ namespace WorkerPMNR {
             }
 
             int end = begin + correctedBytesPerMachine;
+            if (this.topologyID == stopID) {
+                bytesPerSplit = 0;
+            }
             byte[] splits = this.client.getSplits(begin, end, bytesPerSplit);
 
             begin = end + 1;

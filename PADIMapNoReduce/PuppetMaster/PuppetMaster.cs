@@ -100,10 +100,10 @@ namespace PuppetMasterPMNR {
                 if(k.Value == jbURL)
                     this.jobtracker = new KeyValuePair<int,string>(k.Key, k.Value);
 
-            puppetMasterForm.BeginInvoke((Action)delegate {
+            //puppetMasterForm.BeginInvoke((Action)delegate {
                 UserGUIForm userGUI = new UserGUIForm(entryURL, filePath, outputFolderPath, nSplits, mapClassName, dllFilePath);
                 userGUI.SubmitJob();
-            });
+         //   });
 
         }
 

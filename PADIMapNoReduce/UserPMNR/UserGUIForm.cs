@@ -34,6 +34,7 @@ namespace UserPMNR {
             this._dllFilePath = dllFilePath;
             this._mapClassName = mapClassName;
             this._numberSplits = Int32.Parse(nSplits);
+            Client.IS_NOT_FINISHED = true;
         }
  
 
@@ -90,6 +91,13 @@ namespace UserPMNR {
             this._client = new Client();
             this._client.INIT(_entryURL);
             lb_bytes.Text += _client.SUBMIT(_inputFilePath, _numberSplits, _outputFolderPath, _mapClassName, _dllFilePath);
+            
+            while (Client.IS_NOT_FINISHED) {
+                //wait
+            }
+
+            this._client.unregisterChannel();
+            this._client = null;
         }
 
         protected override bool ShowWithoutActivation {

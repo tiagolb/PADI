@@ -15,10 +15,13 @@ using System.Net.Sockets;
 namespace ClientPMNR {
     public class Client {
 
+        public static bool IS_NOT_FINISHED;
+
         private RemoteWorkerInterface remoteWorker;
-        private TcpChannel channel;
+        public static TcpChannel channel;
         private string url;
         // TODO: We need to access this from remoteClient
+        public static int totalSplits;
         public static string inputFile;
         public static string outputFolder;
 
@@ -35,6 +38,7 @@ namespace ClientPMNR {
         }
 
         public int SUBMIT(string inputFilePath, int numberSplits, string outputFolderPath, string className, string dllFilePath) {
+            totalSplits = numberSplits;
             inputFile = inputFilePath;
             outputFolder = outputFolderPath+"/";
             byte[] file = File.ReadAllBytes(inputFilePath);
@@ -43,6 +47,11 @@ namespace ClientPMNR {
 
             remoteWorker.JobMetaData(numberSplits, fileSizeBytes, dllCode, className);
             return fileSizeBytes;
+        }
+
+        public void unregisterChannel() {
+            Client.channel.StopListening(null);
+            Client.channel = null;
         }
 
     }
@@ -99,9 +108,15 @@ namespace ClientPMNR {
          * sendProcessedSplit receives a processed split from worker
          */
         public void sendProcessedSplit(string result, int splitId) {
-
+            Client.totalSplits--;
             File.WriteAllText(Client.outputFolder+splitId+".out", result);
+            if (Client.totalSplits == 0) {
+                Client.IS_NOT_FINISHED = false;
+            }
+
         }
+
+        
     }
 
 }

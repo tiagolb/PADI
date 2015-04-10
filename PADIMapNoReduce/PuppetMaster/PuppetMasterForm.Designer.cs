@@ -199,9 +199,9 @@
             this.lb_presentWorkers.AutoSize = true;
             this.lb_presentWorkers.Location = new System.Drawing.Point(13, 347);
             this.lb_presentWorkers.Name = "lb_presentWorkers";
-            this.lb_presentWorkers.Size = new System.Drawing.Size(151, 13);
+            this.lb_presentWorkers.Size = new System.Drawing.Size(202, 13);
             this.lb_presentWorkers.TabIndex = 20;
-            this.lb_presentWorkers.Text = "Workers Present / JobTracker";
+            this.lb_presentWorkers.Text = "Workers Present / JobTracker (Selected)";
             // 
             // PuppetMasterForm
             // 

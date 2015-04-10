@@ -11,6 +11,7 @@ using System.Windows.Forms;
 using PuppetMasterPMNR;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 
 namespace PuppetMasterPMNR {
     public partial class PuppetMasterForm : Form {
@@ -66,13 +67,17 @@ namespace PuppetMasterPMNR {
 
             switch (words[0]) {
                 case "WORKER":
-                    if (words.Length == 5)
+                    if (words.Length == 5) {
                         puppetMaster.WORKER(Int32.Parse(words[1]), words[2], words[3], words[4]);
-                    else
+                    }
+                    else {
                         puppetMaster.WORKER(Int32.Parse(words[1]), words[2], words[3], "NOENTRYPOINT");
+                    }
                     return;
                 case "SUBMIT":
-                    puppetMaster.SUBMIT(words[1], words[2], words[3], words[4], words[5], words[6]);
+                    Thread submitThread = new Thread(() => puppetMaster.SUBMIT(words[1], words[2], words[3], words[4], words[5], words[6]));
+                    submitThread.Start();
+                    submitThread = null;
                     return;
                 case "WAIT":
                     puppetMaster.WAIT(Int32.Parse(words[1]));

@@ -100,8 +100,21 @@ namespace PuppetMasterPMNR {
                 if(k.Value == jbURL)
                     this.jobtracker = new KeyValuePair<int,string>(k.Key, k.Value);
 
+                //Communicate Job tracker of the job
+            foreach (string rpm in puppetMasters) {
+                RemotePuppetMasterInterface pm = (RemotePuppetMasterInterface)Activator.GetObject(typeof(RemotePuppetMasterInterface), rpm);
+                pm.ReceiveJobTracker(this.jobtracker);
+            }
+
                 UserGUIForm userGUI = new UserGUIForm(entryURL, filePath, outputFolderPath, nSplits, mapClassName, dllFilePath);
                 userGUI.SubmitJob();
+
+                //Reset Job tracker after job
+                this.jobtracker = new KeyValuePair<int, string>(-1, "NONE");
+                foreach (string rpm in puppetMasters) {
+                    RemotePuppetMasterInterface pm = (RemotePuppetMasterInterface)Activator.GetObject(typeof(RemotePuppetMasterInterface), rpm);
+                    pm.ReceiveJobTracker(this.jobtracker);
+                }
         }
 
         
@@ -176,7 +189,13 @@ namespace PuppetMasterPMNR {
                     rw.PrintStatus();
                 }
             }
-            puppetMasterForm.SetWorkers(workplace, jobtracker);
+            puppetMasterForm.BeginInvoke((Action)delegate {
+                puppetMasterForm.SetWorkers(workplace, jobtracker);
+            });
+        }
+
+        public void SetJobTracker(KeyValuePair<int, string> jobtracker) {
+            this.jobtracker = jobtracker;
         }
     }
 
@@ -217,5 +236,8 @@ namespace PuppetMasterPMNR {
             puppetMaster.printWorkerStatus();
         }
 
+        public void ReceiveJobTracker(KeyValuePair<int, string> jobtracker) {
+            this.puppetMaster.SetJobTracker(jobtracker);
+        }
     }
 }

@@ -30,5 +30,6 @@ namespace InterfacePMNR {
         void Connect(string newPuppetMasterURL);
         void ReceiveWorker(int workerID, string serviceURL);
         void PrintWorkerStatus();
+        void ReceiveJobTracker(KeyValuePair<int, string> jobtracker);
     }
 }

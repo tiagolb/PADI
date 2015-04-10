@@ -48,7 +48,9 @@ namespace WorkerPMNR {
     public class Worker {
         private Type type;
         private IMapper classObj;
-        //private string[] split;
+        private int currentLineProcess;
+        private int totalSplitLinesProcess;
+        private int delay;
 
         public Worker(byte[] code, string className) {
             Assembly assembly = Assembly.Load(code);
@@ -64,11 +66,20 @@ namespace WorkerPMNR {
             }
         }
 
+        public int GetCurrentLineProcess() {
+            return this.currentLineProcess;    
+        }
+
+        public int GetTotalSplitLinesProcess() {
+            return this.totalSplitLinesProcess;
+        }
+
         public IList<KeyValuePair<string, string>> processSplit(IList<string> split) {
             IList<KeyValuePair<string, string>> result = new List<KeyValuePair<string, string>>();
             int newLineSize = Environment.NewLine.Length;
             foreach (string line in split) {
-                //Console.WriteLine("Line:" + line + ";");
+                this.currentLineProcess = split.IndexOf(line);
+                this.totalSplitLinesProcess = split.Count -1;
                 result = result.Concat(processLine(line)).ToList();
             }
             return result;
@@ -76,20 +87,24 @@ namespace WorkerPMNR {
 
         private IList<KeyValuePair<string, string>> processLine(string fileLine) {
             object[] args = new object[] { fileLine };
+            
+            if (this.delay != 0) {
+                Console.WriteLine("ENTREI");
+                Thread.Sleep(this.delay * 1000);
+                this.delay = 0;
+            }
+
             object resultObject = type.InvokeMember("Map",
                    BindingFlags.Default | BindingFlags.InvokeMethod,
                    null,
                    classObj,
                    args);
             IList<KeyValuePair<string, string>> r = (IList<KeyValuePair<string, string>>)resultObject;
-            /*foreach (KeyValuePair<string, string> pair in r) {
-                Console.WriteLine("Count: " + pair.Key +" " + pair.Value);
-            }*/
             return (IList<KeyValuePair<string, string>>)resultObject;
         }
 
         public void ApplyDelay(int secondsDelay) {
-            System.Threading.Thread.Sleep(1000 * secondsDelay);
+            this.delay = secondsDelay;
         }
     }
 
@@ -99,6 +114,10 @@ namespace WorkerPMNR {
         private int totalNodes;
         private int id;
         private int topologyID;
+        private int currentSplit;
+        private int currentSplitSize;
+        private int totalDataToProcess;
+        private int numberSplitsToProcess;
         private Worker worker;
         private RemoteWorkerInterface nextNode;
         private RemoteClientInterface client;
@@ -127,8 +146,7 @@ namespace WorkerPMNR {
         }
 
         public void Slow(int secondsDelay) {
-            //worker.ApplyDelay(secondsDelay);
-            //if (workerThread != null) {}
+            worker.ApplyDelay(secondsDelay);
         }
 
         public void BroadcastClient(int stopId, string clientURL) {
@@ -178,6 +196,7 @@ namespace WorkerPMNR {
                 extraSplitBytes = 0;
             }
             byte[] splits = this.client.getSplits(begin, end, extraSplitBytes);
+            this.totalDataToProcess = splits.Length;
 
             begin = end + 1;
             //this.nextNode.Broadcast(begin, bytesPerSplit, extraBytes, splitsPerMachine, extraSplits, code, className);
@@ -187,6 +206,7 @@ namespace WorkerPMNR {
                 broadcastThread.Start();
             }
 
+            this.numberSplitsToProcess = numberSplits;
             workerThread = new Thread(() => processSplitsThread(splits, numberSplits, firstSplit));
             workerThread.Start();
         }
@@ -220,23 +240,32 @@ namespace WorkerPMNR {
             //PROCESS
             IList<KeyValuePair<string, string>> processedSplit;
             int splitId = firstSplit;
-            
+           
+
             foreach (IList<string> split in splits) {
+                this.currentSplit = splitId;
+                this.currentSplitSize = 0;
+                //for status monitoring purpose
+                foreach (string s in split) {
+                this.currentSplitSize += System.Text.ASCIIEncoding.ASCII.GetByteCount(s);
+                }
+                
                 string result = "";
                 processedSplit = worker.processSplit(split);
                 foreach (KeyValuePair<string, string> pair in processedSplit) {
                     result += pair.Key + " : " + pair.Value + Environment.NewLine;
                 }
-                Console.WriteLine("Result: " + result);
-                Console.WriteLine("SentSplit " + splitId);
+                //Console.WriteLine("Result: " + result);
+                //Console.WriteLine("SentSplit " + splitId);
                 client.sendProcessedSplit(result, splitId);
                 splitId++;
             }
+            worker = null;
         }
 
         public void JobMetaData(int numberSplits, int nBytes, byte[] code, string className) {
             //Console.WriteLine("JobMetaData -> " + numberSplits);
-
+            nBytes--;
             int bytesPerSplit = nBytes / numberSplits;
             int extraBytes = mod(nBytes, numberSplits);
 
@@ -300,6 +329,17 @@ namespace WorkerPMNR {
             if (stopID != this.topologyID) {
                 nextNode.JoinBroadcast(stopID, this.topologyID);
             }
+        }
+
+        public void PrintStatus() {
+            Console.WriteLine("==================CURRENT STATUS===================");
+            if (worker != null) {
+                Console.WriteLine("Processing line " + worker.GetCurrentLineProcess() + "/" + worker.GetTotalSplitLinesProcess() +" of split " + this.currentSplit + " which has " + this.currentSplitSize + " bytes");
+                Console.WriteLine("Received " + totalDataToProcess + " total bytes to process in " + numberSplitsToProcess + " splits");
+            }
+            else Console.WriteLine("No Job is currently being performed");
+            Console.WriteLine("Worker ID: " + this.id + " TopologyID: " + this.topologyID + " totalNodes: " + this.totalNodes);
+            Console.WriteLine("===================================================");
         }
     }
 

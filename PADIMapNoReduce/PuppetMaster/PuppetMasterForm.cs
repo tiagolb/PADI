@@ -21,10 +21,10 @@ namespace PuppetMasterPMNR {
 
         public PuppetMasterForm() {
             InitializeComponent();
-            
+
             //Fill textbox of PuppetMasterHost
             host = "" + Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
-            tb_puppetHost.Text = host; 
+            tb_puppetHost.Text = host;
         }
 
         private void bt_script_Click(object sender, EventArgs e) {
@@ -36,7 +36,7 @@ namespace PuppetMasterPMNR {
         }
 
         private void bt_submitScript_Click(object sender, EventArgs e) {
-            if(tb_scriptFileAddress.Text != ""){
+            if (tb_scriptFileAddress.Text != "") {
                 using (StreamReader sr = File.OpenText(tb_scriptFileAddress.Text)) {
                     string s = String.Empty;
                     while ((s = sr.ReadLine()) != null) {
@@ -57,16 +57,16 @@ namespace PuppetMasterPMNR {
 
         private void ProcessCommand(string command) {
 
-            if(command.StartsWith("%"))
+            if (command.StartsWith("%"))
                 return;
 
-              char[] delimiter = { ' ' };
+            char[] delimiter = { ' ' };
 
             string[] words = command.Split(delimiter);
 
-            switch (words[0]) {   
+            switch (words[0]) {
                 case "WORKER":
-                    if(words.Length == 5)
+                    if (words.Length == 5)
                         puppetMaster.WORKER(Int32.Parse(words[1]), words[2], words[3], words[4]);
                     else
                         puppetMaster.WORKER(Int32.Parse(words[1]), words[2], words[3], "NOENTRYPOINT");
@@ -139,9 +139,17 @@ namespace PuppetMasterPMNR {
                 tb_scriptFileAddress.Enabled = true;
                 tb_singleCommand.Enabled = true;
 
-            } else MessageBox.Show("Insert a file path for the script");
+            }
+            else MessageBox.Show("Insert a file path for the script");
         }
 
+        public void SetWorkers(IList<KeyValuePair<int, string>> workers, KeyValuePair<int, string> jobTracker) {
+            lb_workers.Items.Clear();
+            foreach (KeyValuePair<int, string> k in workers)
+                lb_workers.Items.Add("Worker ID: " + k.Key + " | URI: " + k.Value);
+
+            lb_workers.SelectedIndex = lb_workers.FindString("Worker ID: " + jobTracker.Key + " | URI: " + jobTracker.Value);
+        }
 
     }
 }

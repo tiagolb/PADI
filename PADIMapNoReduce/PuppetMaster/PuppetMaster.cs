@@ -24,6 +24,7 @@ namespace PuppetMasterPMNR {
         private IList<KeyValuePair<int, string>> workplace;
         private IList<string> puppetMasters;
         private string host;
+        private KeyValuePair<int,string> jobtracker;
         private int port;
         private RemotePuppetMaster remotePuppetMaster;
 
@@ -90,9 +91,17 @@ namespace PuppetMasterPMNR {
 
         public void SUBMIT(string entryURL, string filePath, string outputFolderPath, string nSplits, string mapClassName, string dllFilePath) { 
             //Creates user application in local node. The application submits the designated job
+            string jbURL = entryURL;
+            Uri baseUri = new Uri(jbURL);
+            if (baseUri.IsLoopback)
+                jbURL = "tcp://" + this.host + ":" + baseUri.Port + "/W";
+
+            foreach(KeyValuePair<int,string> k in workplace)
+                if(k.Value == jbURL)
+                    this.jobtracker = new KeyValuePair<int,string>(k.Key, k.Value);
+
             puppetMasterForm.BeginInvoke((Action)delegate {
                 UserGUIForm userGUI = new UserGUIForm(entryURL, filePath, outputFolderPath, nSplits, mapClassName, dllFilePath);
-                userGUI.Show();
                 userGUI.SubmitJob();
             });
 
@@ -167,9 +176,10 @@ namespace PuppetMasterPMNR {
                 Uri baseUri = new Uri(k.Value);
                 if (baseUri.Host.Equals(this.host)) {
                     RemoteWorkerInterface rw = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), k.Value);
-                    //rw.PrintStatus();
+                    rw.PrintStatus();
                 }
             }
+            puppetMasterForm.SetWorkers(workplace, jobtracker);
         }
     }
 

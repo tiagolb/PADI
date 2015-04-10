@@ -40,6 +40,8 @@
             this.bt_openConfig = new System.Windows.Forms.Button();
             this.tb_puppetHost = new System.Windows.Forms.TextBox();
             this.lb_puppetHost = new System.Windows.Forms.Label();
+            this.lb_workers = new System.Windows.Forms.ListBox();
+            this.lb_presentWorkers = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // lb_PuppetMasterURL
@@ -184,11 +186,30 @@
             this.lb_puppetHost.TabIndex = 17;
             this.lb_puppetHost.Text = "Puppet Master Host Machine:";
             // 
+            // lb_workers
+            // 
+            this.lb_workers.FormattingEnabled = true;
+            this.lb_workers.Location = new System.Drawing.Point(16, 363);
+            this.lb_workers.Name = "lb_workers";
+            this.lb_workers.Size = new System.Drawing.Size(282, 173);
+            this.lb_workers.TabIndex = 19;
+            // 
+            // lb_presentWorkers
+            // 
+            this.lb_presentWorkers.AutoSize = true;
+            this.lb_presentWorkers.Location = new System.Drawing.Point(13, 347);
+            this.lb_presentWorkers.Name = "lb_presentWorkers";
+            this.lb_presentWorkers.Size = new System.Drawing.Size(151, 13);
+            this.lb_presentWorkers.TabIndex = 20;
+            this.lb_presentWorkers.Text = "Workers Present / JobTracker";
+            // 
             // PuppetMasterForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(784, 562);
+            this.Controls.Add(this.lb_presentWorkers);
+            this.Controls.Add(this.lb_workers);
             this.Controls.Add(this.tb_puppetHost);
             this.Controls.Add(this.lb_puppetHost);
             this.Controls.Add(this.bt_submitConfig);
@@ -230,6 +251,8 @@
         private System.Windows.Forms.Button bt_openConfig;
         private System.Windows.Forms.TextBox tb_puppetHost;
         private System.Windows.Forms.Label lb_puppetHost;
+        private System.Windows.Forms.ListBox lb_workers;
+        private System.Windows.Forms.Label lb_presentWorkers;
     }
 }
 

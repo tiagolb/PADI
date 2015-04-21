@@ -72,9 +72,8 @@ namespace UserPMNR {
             }
         }
 
-        // Useful methods
+
         public static bool CheckURLValid(string source) {
-            //return Uri.IsWellFormedUriString(source, UriKind.RelativeOrAbsolute);
             string regular = @"^(tcp)\:\/\/[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*(\/?)([a-zA-Z0-9\-\.\?\,\'\/\\\+&amp;%\$#_]*)?$";
             return Regex.IsMatch(source, regular);
         }

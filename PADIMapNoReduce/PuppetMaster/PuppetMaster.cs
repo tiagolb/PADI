@@ -86,6 +86,8 @@ namespace PuppetMasterPMNR {
                 RemotePuppetMasterInterface pm = (RemotePuppetMasterInterface)Activator.GetObject(typeof(RemotePuppetMasterInterface), puppetMasterURL);
                 pm.CreateWorker(id, serviceURL, entryURL);
             }
+            //wait 2 seconds for worker creation
+            System.Threading.Thread.Sleep(1000 * 2);
         }
 
 

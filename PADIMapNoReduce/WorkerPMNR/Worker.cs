@@ -200,7 +200,6 @@ namespace WorkerPMNR {
             this.totalDataToProcess = splits.Length;
 
             begin = end + 1;
-            //this.nextNode.Broadcast(begin, bytesPerSplit, extraBytes, splitsPerMachine, extraSplits, code, className);
             if (this.topologyID != stopID) {
                 Thread broadcastThread = new Thread(() => this.nextNode.Broadcast(stopID, begin, firstSplit + numberSplits, bytesPerSplit, extraBytes, splitsPerMachine, extraSplits, code, className));
                 broadcastThread.Start();
@@ -255,8 +254,10 @@ namespace WorkerPMNR {
                 foreach (KeyValuePair<string, string> pair in processedSplit) {
                     result += pair.Key + " : " + pair.Value + Environment.NewLine;
                 }
+                #region debugComments
                 //Console.WriteLine("Result: " + result);
                 //Console.WriteLine("SentSplit " + splitId);
+                #endregion
                 client.sendProcessedSplit(result, splitId);
                 splitId++;
             }
@@ -264,7 +265,9 @@ namespace WorkerPMNR {
         }
 
         public void JobMetaData(int numberSplits, int nBytes, byte[] code, string className) {
+            #region debugComments
             //Console.WriteLine("JobMetaData -> " + numberSplits);
+            #endregion
             nBytes--;
             int bytesPerSplit = nBytes / numberSplits;
             int extraBytes = mod(nBytes, numberSplits);

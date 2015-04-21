@@ -162,6 +162,7 @@ namespace WorkerPMNR {
         public void SetNextNodeURL(string workerURL) {
             Console.WriteLine("NextNodeURL: " + workerURL);
             nextNode = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), workerURL);
+            nextNodeURL = workerURL;
         }
 
         private int mod(int x, int m) {
@@ -200,7 +201,6 @@ namespace WorkerPMNR {
 
             begin = end + 1;
             //this.nextNode.Broadcast(begin, bytesPerSplit, extraBytes, splitsPerMachine, extraSplits, code, className);
-
             if (this.topologyID != stopID) {
                 Thread broadcastThread = new Thread(() => this.nextNode.Broadcast(stopID, begin, firstSplit + numberSplits, bytesPerSplit, extraBytes, splitsPerMachine, extraSplits, code, className));
                 broadcastThread.Start();
@@ -272,12 +272,14 @@ namespace WorkerPMNR {
             int splitsPerMachine = numberSplits / this.totalNodes;
             int extraSplits = mod(numberSplits, this.totalNodes);
 
+            #region debugComments
             //Console.WriteLine("JobMetaData NSplits -> " + numberSplits);
             //Console.WriteLine("JobMetaData bps-> " + bytesPerSplit);
             //Console.WriteLine("JobMetaData eb-> " + extraBytes);
             //Console.WriteLine("JobMetaData spm-> " + splitsPerMachine);
             //Console.WriteLine("JobMetaData es-> " + extraSplits);
-            
+            #endregion
+
             int stopID = 0;
             if (nextNode != null) {   //Compute the ID of the node that shall stop broadcasting
                 stopID = mod((this.topologyID - 1), totalNodes);

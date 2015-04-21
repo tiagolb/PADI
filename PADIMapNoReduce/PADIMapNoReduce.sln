@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientPMNR", "ClientPMNR\Cl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkerPMNR", "WorkerPMNR\WorkerPMNR.csproj", "{75E76B65-1FA7-469C-A817-82052C18C3A3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interfaces", "IMapInterface\Interfaces.csproj", "{90F62D73-F20C-4E6B-9AB4-39BF08397210}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibPADIMapNoReduce", "IMapInterface\LibPADIMapNoReduce.csproj", "{90F62D73-F20C-4E6B-9AB4-39BF08397210}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibMapper", "LibMapper\LibMapper.csproj", "{483057AD-1A1C-44E9-B81A-84B68935A8D4}"
 EndProject

@@ -250,6 +250,7 @@ namespace WorkerPMNR {
                 }
                 
                 string result = "";
+                Thread.Sleep(30 * 1000);
                 processedSplit = worker.processSplit(split);
                 foreach (KeyValuePair<string, string> pair in processedSplit) {
                     result += pair.Key + " : " + pair.Value + Environment.NewLine;

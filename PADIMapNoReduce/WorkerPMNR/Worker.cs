@@ -82,14 +82,15 @@ namespace WorkerPMNR {
                 this.totalSplitLinesProcess = split.Count -1;
                 result = result.Concat(processLine(line)).ToList();
             }
+            //Thread.Sleep(30 * 1000);
             return result;
         }
 
         private IList<KeyValuePair<string, string>> processLine(string fileLine) {
             object[] args = new object[] { fileLine };
             
-            if (this.delay != 0) {
-                Console.WriteLine("ENTREI");
+            if (this.delay > 0) {
+                //Console.WriteLine("ENTREI");
                 Thread.Sleep(this.delay * 1000);
                 this.delay = 0;
             }
@@ -123,6 +124,12 @@ namespace WorkerPMNR {
         private RemoteClientInterface client;
         private string nextNodeURL;
         private string clientURL;
+        private IList<IList<string>> splitPool = new List<IList<string>>();
+
+        //infinite lifetime
+        public override object InitializeLifetimeService() {
+            return null;
+        }
 
         // Thread 
         Thread workerThread;
@@ -193,75 +200,106 @@ namespace WorkerPMNR {
 
             int end = begin + correctedBytesPerMachine;
             int extraSplitBytes = bytesPerSplit;
-            if (this.topologyID == stopID) {
-                extraSplitBytes = 0;
-            }
-            byte[] splits = this.client.getSplits(begin, end, extraSplitBytes);
-            this.totalDataToProcess = splits.Length;
 
-            begin = end + 1;
+            int beginNext = end + 1;
             if (this.topologyID != stopID) {
-                Thread broadcastThread = new Thread(() => this.nextNode.Broadcast(stopID, begin, firstSplit + numberSplits, bytesPerSplit, extraBytes, splitsPerMachine, extraSplits, code, className));
+                Thread broadcastThread = new Thread(() => this.nextNode.Broadcast(stopID, beginNext, firstSplit + numberSplits, bytesPerSplit, extraBytes, splitsPerMachine, extraSplits, code, className));
                 broadcastThread.Start();
             }
 
+            Thread downloadThread = new Thread(() => getSplits(begin, end, bytesPerSplit, extraSplitBytes, stopID));
+            downloadThread.Start();
+            this.totalDataToProcess = end - begin;
+
+            
+
             this.numberSplitsToProcess = numberSplits;
-            workerThread = new Thread(() => processSplitsThread(splits, numberSplits, firstSplit));
+            workerThread = new Thread(() => processSplitsThread(numberSplits, firstSplit));
             workerThread.Start();
         }
 
+        private void getSplits(int begin, int end, int splitSize, int extraSplitSize, int stopId) {
+            
+            int beginSplit = begin;
+            int endSplit = beginSplit + splitSize;
+            byte[] split;
+            string splitText;
+            string[] strings;
+            IList<string> splitLines;
 
-        private void processSplitsThread(byte[] splitsBytes, int myNumberSplits, int firstSplit) {
-            IList<IList<string>> splits = new List<IList<string>>();
+            while (endSplit <= end) {
+                split = this.client.getSplits(beginSplit, endSplit, extraSplitSize);
+                splitText = System.Text.Encoding.ASCII.GetString(split);
 
-            string splitText = System.Text.Encoding.ASCII.GetString(splitsBytes);
+                // string split internamente cria muitas instancias e obriga o GC a trabalhar muito
+                strings = splitText.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+                splitLines = new List<string>(strings);
 
-            string[] splitLines = splitText.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-            IList<string> splitLinesList = new List<string>(splitLines);
-
-            int linesPerSplit = splitLines.Count() / myNumberSplits;
-            for (int i = 0; i < myNumberSplits - 1; i++) { // para o ultimo receber fora
-                IList<string> split = new List<string>();
-                for (int j = 0; j < linesPerSplit; j++) {
-                    split.Add(splitLinesList[0]);
-                    splitLinesList.RemoveAt(0);
+                lock (splitPool) {
+                    splitPool.Add(splitLines);
                 }
-                splits.Add(split);
+                beginSplit = endSplit + 1;
+                endSplit = beginSplit + splitSize;
             }
 
-            //ultimo split
-            IList<string> lastSplit = new List<string>();
-            foreach (string line in splitLinesList) {
-                lastSplit.Add(line);
-            }
-            splits.Add(lastSplit);
+            if (this.topologyID == stopId) {
+                split = this.client.getSplits(beginSplit, endSplit, 0);
+                splitText = System.Text.Encoding.ASCII.GetString(split);
+                strings = splitText.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+                splitLines = new List<string>(strings);
 
-            //PROCESS
-            IList<KeyValuePair<string, string>> processedSplit;
+                lock (splitPool) {
+                    splitPool.Add(splitLines);
+                }
+            } else {
+                split = this.client.getSplits(beginSplit, endSplit, extraSplitSize);
+                splitText = System.Text.Encoding.ASCII.GetString(split);
+                strings = splitText.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+                splitLines = new List<string>(strings);
+
+                lock (splitPool) {
+                    splitPool.Add(splitLines);
+                }
+            }
+        }
+
+        private void processSplitsThread(int myNumberSplits, int firstSplit) {
+
             int splitId = firstSplit;
-           
+            IList<KeyValuePair<string, string>> processedSplit;
+            while (myNumberSplits > 0) {
+                //Console.WriteLine("myNumberSplits: {0}, splitId: {1}, poolCount: {2}", myNumberSplits, splitId, splitPool.Count);
+                if (splitPool.Count > 0) {
+                    IList<string> split;
+                    lock (splitPool) {
+                        split = splitPool[0];
+                        splitPool.RemoveAt(0);
+                    }
+                    this.currentSplit = splitId;
+                    this.currentSplitSize = 0;
+                    //for status monitoring purpose
+                    foreach (string s in split) {
+                        this.currentSplitSize += System.Text.ASCIIEncoding.ASCII.GetByteCount(s);
+                    }
 
-            foreach (IList<string> split in splits) {
-                this.currentSplit = splitId;
-                this.currentSplitSize = 0;
-                //for status monitoring purpose
-                foreach (string s in split) {
-                this.currentSplitSize += System.Text.ASCIIEncoding.ASCII.GetByteCount(s);
+                    StringBuilder result = new StringBuilder();
+                    processedSplit = worker.processSplit(split);
+                    foreach (KeyValuePair<string, string> pair in processedSplit) {
+                        result.Append(pair.Key);
+                        result.Append(" : ");
+                        result.Append(pair.Value);
+                        result.Append(Environment.NewLine);
+                    }
+                    #region debugComments
+                    //Console.WriteLine("Result: " + result);
+                    //Console.WriteLine("SentSplit " + splitId);
+                    #endregion
+                    client.sendProcessedSplit(result.ToString(), splitId);
+                    splitId++;
+                    myNumberSplits--;
                 }
-                
-                string result = "";
-                Thread.Sleep(30 * 1000);
-                processedSplit = worker.processSplit(split);
-                foreach (KeyValuePair<string, string> pair in processedSplit) {
-                    result += pair.Key + " : " + pair.Value + Environment.NewLine;
-                }
-                #region debugComments
-                //Console.WriteLine("Result: " + result);
-                //Console.WriteLine("SentSplit " + splitId);
-                #endregion
-                client.sendProcessedSplit(result, splitId);
-                splitId++;
             }
+            
             worker = null;
         }
 

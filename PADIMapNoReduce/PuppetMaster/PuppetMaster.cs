@@ -74,7 +74,8 @@ namespace PuppetMasterPMNR {
                 p.StartInfo.RedirectStandardInput = false;
 
                 System.IO.DirectoryInfo myDirectory = new DirectoryInfo(Environment.CurrentDirectory);
-                p.StartInfo.FileName = System.IO.Path.Combine(myDirectory.ToString(), "..\\..\\..\\WorkerPMNR\\bin\\Debug\\WorkerPMNR.exe");
+                //p.StartInfo.FileName = System.IO.Path.Combine(myDirectory.ToString(), "..\\..\\..\\WorkerPMNR\\bin\\Debug\\WorkerPMNR.exe");
+                p.StartInfo.FileName = System.IO.Path.Combine(myDirectory.ToString(), "WorkerPMNR.exe");
                 p.StartInfo.Arguments = String.Join(" ", args);
                 p.Start();
 

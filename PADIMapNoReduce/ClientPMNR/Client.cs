@@ -18,6 +18,8 @@ namespace ClientPMNR {
         public static bool IS_NOT_FINISHED;
 
         private RemoteWorkerInterface remoteWorker;
+        //private RemoteClient remoteClient;
+
         public static TcpChannel channel;
         private string url;
         // TODO: We need to access this from remoteClient
@@ -30,7 +32,9 @@ namespace ClientPMNR {
             channel = new TcpChannel(10001);
             // It should work but says we already registered a channel named 'tcp'
             //ChannelServices.RegisterChannel(channel, false);
+
             RemotingConfiguration.RegisterWellKnownServiceType(typeof(RemoteClient), "C", WellKnownObjectMode.SingleCall);
+            
             url = "tcp://" + Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
             url += ":10001/C";
             remoteWorker.SetClientURL(url);
@@ -60,12 +64,7 @@ namespace ClientPMNR {
 
         private static Object thisLock = new Object();
 
-        IList<IList<KeyValuePair<string, string>>> processedSplits;
-
-
-        public RemoteClient() {
-            this.processedSplits = new List<IList<KeyValuePair<string, string>>>();
-        }
+        public RemoteClient() {}
 
         /*
          * getSplit receives begin and end position of the file byte array
@@ -77,6 +76,7 @@ namespace ClientPMNR {
 
             byte[] splitBytes = new byte[bytesToRead];
 
+            
             lock (thisLock) {
                 using (BinaryReader reader = new BinaryReader(new FileStream(Client.inputFile, FileMode.Open))) {
                     reader.BaseStream.Seek(begin, SeekOrigin.Begin);
@@ -85,7 +85,9 @@ namespace ClientPMNR {
                 }
             }
 
+
             string split = System.Text.Encoding.ASCII.GetString(splitBytes);
+            splitBytes = null; // free memory
             int indexFirstNL, indexExtraNL;
             if (begin != 0) {
                 indexFirstNL = split.IndexOf(Environment.NewLine) + Environment.NewLine.Length;

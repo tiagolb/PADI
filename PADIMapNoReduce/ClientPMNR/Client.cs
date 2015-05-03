@@ -45,6 +45,9 @@ namespace ClientPMNR {
             totalSplits = numberSplits;
             inputFile = inputFilePath;
             outputFolder = outputFolderPath+"/";
+            // TODO: em vez de ler todos os bytes para memória fazer:
+            /*FileInfo file = new FileInfo(inputFilePath);
+            int fileSizeBytes = file.Length;*/
             byte[] file = File.ReadAllBytes(inputFilePath);
             int fileSizeBytes = file.Length;
             byte[] dllCode = File.ReadAllBytes(dllFilePath);
@@ -118,7 +121,16 @@ namespace ClientPMNR {
 
         }
 
-        
+        // TODO: Usar isto para procurar nemLine no array de bytes
+        private int FindNewLine(ref byte[] split, int startIndex = 0) {
+            byte[] newLine = Encoding.ASCII.GetBytes(Environment.NewLine);
+            for (int i = startIndex; i < split.Length; i++) {
+                if (split[i] == newLine[0] && split[i + 1] == newLine[1]) {
+                    return i;
+                }
+            }
+            return -1;
+        }
     }
 
 }

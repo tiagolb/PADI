@@ -124,6 +124,7 @@ namespace WorkerPMNR {
         private RemoteClientInterface client;
         private string nextNodeURL;
         private string clientURL;
+        // TODO: usar SplitPool em vez de lista
         private IList<IList<string>> splitPool = new List<IList<string>>();
 
         //infinite lifetime
@@ -232,6 +233,7 @@ namespace WorkerPMNR {
                 splitText = System.Text.Encoding.ASCII.GetString(split);
 
                 // string split internamente cria muitas instancias e obriga o GC a trabalhar muito
+                // TODO: Usar LowMemSplit em vez disto
                 strings = splitText.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
                 splitLines = new List<string>(strings);
 
@@ -384,6 +386,34 @@ namespace WorkerPMNR {
             else Console.WriteLine("No Job is currently being performed");
             Console.WriteLine("Worker ID: " + this.id + " TopologyID: " + this.topologyID + " totalNodes: " + this.totalNodes);
             Console.WriteLine("===================================================");
+        }
+
+        private List<string> LowMemSplit(ref string s, string seperator) {
+            List<string> list = new List<string>();
+            int lastPos = 0;
+            int pos = s.IndexOf(seperator);
+            while (pos > -1) {
+                while (pos == lastPos) {
+                    lastPos += seperator.Length;
+                    pos = s.IndexOf(seperator, lastPos);
+                    if (pos == -1)
+                        return list;
+                }
+
+                string tmp = s.Substring(lastPos, pos - lastPos);
+                if (tmp.Trim().Length > 0)
+                    list.Add(tmp);
+                lastPos = pos + seperator.Length;
+                pos = s.IndexOf(seperator, lastPos);
+            }
+
+            if (lastPos < s.Length) {
+                string tmp = s.Substring(lastPos, s.Length - lastPos);
+                if (tmp.Trim().Length > 0)
+                    list.Add(tmp);
+            }
+
+            return list;
         }
     }
 

@@ -18,7 +18,6 @@ namespace ClientPMNR {
         public static bool IS_NOT_FINISHED;
 
         private RemoteWorkerInterface remoteWorker;
-        //private RemoteClient remoteClient;
 
         public static TcpChannel channel;
         private string url;
@@ -26,6 +25,14 @@ namespace ClientPMNR {
         public static int totalSplits;
         public static string inputFile;
         public static string outputFolder;
+
+        private static Object totalSplitsLock = new Object();
+
+        public static void DecTotalSplits() {
+            lock (totalSplitsLock) {
+                totalSplits--;
+            }
+        }
 
         public void INIT(string entryURL) {
             remoteWorker = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), entryURL);
@@ -45,11 +52,8 @@ namespace ClientPMNR {
             totalSplits = numberSplits;
             inputFile = inputFilePath;
             outputFolder = outputFolderPath+"/";
-            // TODO: em vez de ler todos os bytes para memória fazer:
-            /*FileInfo file = new FileInfo(inputFilePath);
-            int fileSizeBytes = file.Length;*/
-            byte[] file = File.ReadAllBytes(inputFilePath);
-            int fileSizeBytes = file.Length;
+            FileInfo file = new FileInfo(inputFilePath);
+            int fileSizeBytes = (int)file.Length;
             byte[] dllCode = File.ReadAllBytes(dllFilePath);
 
             remoteWorker.JobMetaData(numberSplits, fileSizeBytes, dllCode, className);
@@ -73,47 +77,45 @@ namespace ClientPMNR {
          * getSplit receives begin and end position of the file byte array
          * return byte array from begin to end
          */
-        public byte[] getSplits(int begin, int end, int extraSplitSize) {
+        public byte[] getSplits(int begin, int end, int extraSplitSize, int id) {
             int mySplitsSize = end - begin;
             int bytesToRead = mySplitsSize + extraSplitSize;
 
             byte[] splitBytes = new byte[bytesToRead];
-
+            int bytesRead = 0;
             
             lock (thisLock) {
                 using (BinaryReader reader = new BinaryReader(new FileStream(Client.inputFile, FileMode.Open))) {
                     reader.BaseStream.Seek(begin, SeekOrigin.Begin);
-                    reader.Read(splitBytes, 0, bytesToRead);
+                    bytesRead += reader.Read(splitBytes, 0, bytesToRead);
                     reader.Close();
                 }
             }
 
-
-            string split = System.Text.Encoding.ASCII.GetString(splitBytes);
-            splitBytes = null; // free memory
             int indexFirstNL, indexExtraNL;
             if (begin != 0) {
-                indexFirstNL = split.IndexOf(Environment.NewLine) + Environment.NewLine.Length;
+                indexFirstNL = FindNewLine(ref splitBytes) + Environment.NewLine.Length;
             } else {
                 indexFirstNL = 0;
             }
-            indexExtraNL = split.IndexOf(Environment.NewLine, mySplitsSize);
+            indexExtraNL = FindNewLine(ref splitBytes, mySplitsSize);
 
             int splitLength = indexExtraNL - indexFirstNL;
             // TODO: Senao existir um newline no meio do split (que ja vimos que acontece) a logica esta mal
-            if (splitLength > 0) {
-                split = split.Substring(indexFirstNL, splitLength);
-            } else {
-                split = split.Substring(indexFirstNL);
+            if (splitLength <= 0) {
+                splitLength = bytesRead - indexFirstNL;
             }
-            return System.Text.Encoding.ASCII.GetBytes(split);
+
+            byte[] result = new byte[splitLength];
+            Array.Copy(splitBytes, indexFirstNL, result, 0, splitLength);
+            return result;
         }
 
         /*
          * sendProcessedSplit receives a processed split from worker
          */
         public void sendProcessedSplit(string result, int splitId) {
-            Client.totalSplits--;
+            Client.DecTotalSplits();
             File.WriteAllText(Client.outputFolder+splitId+".out", result);
             if (Client.totalSplits == 0) {
                 Client.IS_NOT_FINISHED = false;
@@ -121,7 +123,6 @@ namespace ClientPMNR {
 
         }
 
-        // TODO: Usar isto para procurar nemLine no array de bytes
         private int FindNewLine(ref byte[] split, int startIndex = 0) {
             byte[] newLine = Encoding.ASCII.GetBytes(Environment.NewLine);
             for (int i = startIndex; i < split.Length; i++) {

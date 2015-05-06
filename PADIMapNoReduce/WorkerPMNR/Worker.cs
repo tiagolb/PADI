@@ -124,6 +124,10 @@ namespace WorkerPMNR {
         private string clientURL;
         private SplitPool<IList<string>> splitPool;
         private IList<string> remoteWorkers;
+        private TimerCallback TimerDelegate;
+        private const int TIMEOUT = 10000;
+
+        public delegate void RemoteAsyncDelegate();
 
         //infinite lifetime
         public override object InitializeLifetimeService() {
@@ -142,6 +146,8 @@ namespace WorkerPMNR {
             this.nextNodeURL = this.url;
             this.remoteWorkers = new List<string>();
             this.remoteWorkers.Add(this.url);
+
+            TimerDelegate = new TimerCallback(CheckAlive);
         }
 
         public void SetClientURL(string clientURL) {
@@ -168,6 +174,9 @@ namespace WorkerPMNR {
 
 
         public void SetNextNodeURL(string workerURL, IList<string> remoteWorkers) {
+            if (nextNode == null) {
+                Timer TimerItem = new Timer(TimerDelegate, new object(), TIMEOUT, TIMEOUT);
+            }
             Console.WriteLine("NextNodeURL: " + workerURL);
             nextNode = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), workerURL);
             nextNodeURL = workerURL;
@@ -341,6 +350,8 @@ namespace WorkerPMNR {
             if (nextNode != null) {   //Compute the ID of the node that shall stop broadcasting
                 int stopID = mod((this.topologyID - 1), totalNodes);
                 nextNode.JoinBroadcast(stopID, newTopologyId, newTopologyId, workerURL);
+            } else {
+                Timer TimerItem = new Timer(TimerDelegate, new object(), TIMEOUT, TIMEOUT);
             }
 
             // Inserts in list the new WorkerURL
@@ -374,6 +385,36 @@ namespace WorkerPMNR {
             if (stopID != this.topologyID) {
                 nextNode.JoinBroadcast(stopID, this.topologyID, newTopologyId, newWorker);
             }
+        }
+
+        private void CheckAlive(object StateObj) {
+            if (remoteWorkers.Count > 1) {
+                // From the node behind him
+                int previousTopologyId = mod((this.topologyID - 1), totalNodes);
+                string previousWorkerURL = remoteWorkers[previousTopologyId];
+
+                RemoteWorkerInterface previousWorker = 
+                    (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), previousWorkerURL);
+
+                // TODO: we can make a more traditional imAlive with async calls
+
+                //RemoteAsyncDelegate RemoteDel = new RemoteAsyncDelegate(previousWorker.Check);
+                // Call delegate to remote method
+                //IAsyncResult RemAr = RemoteDel.BeginInvoke(null, null);
+
+                try {
+                    previousWorker.Check();
+                }
+                catch (SocketException) {
+                    // TODO: Handle Failure
+                    Console.WriteLine("Died");
+                }
+            }
+        }
+
+        // Just to check connection
+        public void Check() {
+            Console.WriteLine("Check");
         }
 
         public void PrintStatus() {

@@ -20,6 +20,7 @@ namespace InterfacePMNR {
         void BroadcastClient(int stopId, string clientURL);
         void Slow(int secondsDelay);
         void PrintStatus();
+        void Check();
     }
 
     public interface RemotePuppetMasterInterface {

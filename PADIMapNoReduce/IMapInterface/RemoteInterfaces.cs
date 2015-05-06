@@ -21,6 +21,7 @@ namespace InterfacePMNR {
         void Slow(int secondsDelay);
         void PrintStatus();
         void Check();
+        void RepairTopologyChain(int stopID, int deadNodeID);
     }
 
     public interface RemotePuppetMasterInterface {

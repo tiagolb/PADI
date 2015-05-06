@@ -148,6 +148,7 @@ namespace WorkerPMNR {
             this.remoteWorkers.Add(this.url);
 
             TimerDelegate = new TimerCallback(CheckAlive);
+            Timer TimerItem = new Timer(TimerDelegate, new object(), TIMEOUT, TIMEOUT);
         }
 
         public void SetClientURL(string clientURL) {
@@ -174,14 +175,22 @@ namespace WorkerPMNR {
 
 
         public void SetNextNodeURL(string workerURL, IList<string> remoteWorkers) {
-            if (nextNode == null) {
+            /*if (nextNode == null) {
                 Timer TimerItem = new Timer(TimerDelegate, new object(), TIMEOUT, TIMEOUT);
-            }
+            }*/
             Console.WriteLine("NextNodeURL: " + workerURL);
             nextNode = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), workerURL);
             nextNodeURL = workerURL;
             this.remoteWorkers = remoteWorkers;
         }
+
+        /*private void checkNewNextNodeURL(int newNextNodeID) {
+            string newNextNode = remoteWorkers[newNextNodeID];
+            Console.WriteLine("Repaired - NextNodeURL: " + newNextNode);
+            nextNode = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), newNextNode);
+            nextNodeURL = newNextNode;
+            nextNode.Check();
+        }*/
 
         private int mod(int x, int m) {
             return (x % m + m) % m;
@@ -350,9 +359,9 @@ namespace WorkerPMNR {
             if (nextNode != null) {   //Compute the ID of the node that shall stop broadcasting
                 int stopID = mod((this.topologyID - 1), totalNodes);
                 nextNode.JoinBroadcast(stopID, newTopologyId, newTopologyId, workerURL);
-            } else {
+            } /*else {
                 Timer TimerItem = new Timer(TimerDelegate, new object(), TIMEOUT, TIMEOUT);
-            }
+            }*/
 
             // Inserts in list the new WorkerURL
             // It is inserted after my own URL so the list stays ordered
@@ -364,8 +373,6 @@ namespace WorkerPMNR {
             nextNode = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), workerURL);
             nextNode.SetNextNodeURL(nextNodeURL, remoteWorkers);
             nextNodeURL = workerURL;
-
-            
 
             Console.WriteLine("Connect -> ID: " + this.id + " TopologyID: " + this.topologyID + " totalNodes: " + this.totalNodes);
             //Returns to the new Node it's ID and Total Nodes in the ring
@@ -390,12 +397,12 @@ namespace WorkerPMNR {
         private void CheckAlive(object StateObj) {
             if (remoteWorkers.Count > 1) {
                 // From the node behind him
-                int previousTopologyId = mod((this.topologyID - 1), totalNodes);
+                /*int previousTopologyId = mod((this.topologyID - 1), totalNodes);
                 string previousWorkerURL = remoteWorkers[previousTopologyId];
 
                 RemoteWorkerInterface previousWorker = 
                     (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), previousWorkerURL);
-
+                */
                 // TODO: we can make a more traditional imAlive with async calls
 
                 //RemoteAsyncDelegate RemoteDel = new RemoteAsyncDelegate(previousWorker.Check);
@@ -403,18 +410,70 @@ namespace WorkerPMNR {
                 //IAsyncResult RemAr = RemoteDel.BeginInvoke(null, null);
 
                 try {
-                    previousWorker.Check();
+                    this.nextNode.Check();
                 }
                 catch (SocketException) {
                     // TODO: Handle Failure
-                    Console.WriteLine("Died");
+                    Console.WriteLine("{0} has died - Initiate CPR protocol", this.nextNodeURL);
+                    RepairTopologyChain();
                 }
+            }
+        }
+
+        private void RepairTopologyChain() {
+            int deadNodeID = mod((this.topologyID + 1), totalNodes);
+            string deadNodeURL = nextNodeURL;
+
+            int newNextNodeID = mod((deadNodeID + 1), totalNodes);
+            this.totalNodes--;
+
+            string newNextNode = remoteWorkers[newNextNodeID];
+            Console.WriteLine("Repaired - NextNodeURL: " + newNextNode);
+            nextNode = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), newNextNode);
+            nextNodeURL = newNextNode;
+
+            remoteWorkers.RemoveAt(deadNodeID);
+            this.topologyID = remoteWorkers.IndexOf(this.url);
+
+            int stopID = mod((this.topologyID - 1), totalNodes);
+            nextNode.RepairTopologyChain(stopID, deadNodeID);
+
+            
+
+            #region GG
+            /*List<string> toRemoveURL = new List<string>();
+            toRemoveURL.Add(deadNodeURL); // failed node
+
+            for (int newNextNodeID = deadNodeID + 1; newNextNodeID != this.topologyID; newNextNodeID = mod((newNextNodeID + 1), totalNodes)) {
+                try {
+                    checkNewNextNodeURL(newNextNodeID);
+                    Console.WriteLine("Chain repaired with worker {0}, ID: {1}", nextNodeURL, newNextNodeID);
+                } catch (SocketException) {
+                    deadNodeURL = nextNodeURL;
+                    toRemoveURL.Add(deadNodeURL);
+                }
+            }
+
+            // remove failed nodes from list
+            foreach (string toRemoveNodeURL in toRemoveURL) {
+                remoteWorkers.Remove(toRemoveNodeURL);
+            }*/
+            #endregion
+        }
+
+        public void RepairTopologyChain(int stopID, int deadNodeID) {
+            // remove failed nodes from list
+            remoteWorkers.RemoveAt(deadNodeID);
+            this.topologyID = remoteWorkers.IndexOf(this.url);
+
+            if (this.topologyID != stopID) {
+                nextNode.RepairTopologyChain(stopID, deadNodeID);
             }
         }
 
         // Just to check connection
         public void Check() {
-            Console.WriteLine("Check");
+            Console.WriteLine("I am Alive");
         }
 
         public void PrintStatus() {
@@ -431,6 +490,10 @@ namespace WorkerPMNR {
                 Console.WriteLine(remoteWorker);
             }
             Console.WriteLine("===================================================");
+            //DEBUG
+            foreach (string remoteWorker in remoteWorkers) {
+                Console.WriteLine("worker: {0}", remoteWorker);
+            }
         }
 
         private List<string> LowMemSplit(ref string s, string seperator) {

@@ -123,6 +123,7 @@ namespace WorkerPMNR {
         private string nextNodeURL;
         private string clientURL;
         private SplitPool<IList<string>> splitPool;
+        private IList<string> remoteWorkers;
 
         //infinite lifetime
         public override object InitializeLifetimeService() {
@@ -139,6 +140,8 @@ namespace WorkerPMNR {
             this.totalNodes = 1;
             this.id = id;
             this.nextNodeURL = this.url;
+            this.remoteWorkers = new List<string>();
+            this.remoteWorkers.Add(this.url);
         }
 
         public void SetClientURL(string clientURL) {
@@ -164,10 +167,11 @@ namespace WorkerPMNR {
         }
 
 
-        public void SetNextNodeURL(string workerURL) {
+        public void SetNextNodeURL(string workerURL, IList<string> remoteWorkers) {
             Console.WriteLine("NextNodeURL: " + workerURL);
             nextNode = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), workerURL);
             nextNodeURL = workerURL;
+            this.remoteWorkers = remoteWorkers;
         }
 
         private int mod(int x, int m) {
@@ -205,16 +209,18 @@ namespace WorkerPMNR {
 
             int beginNext = end + 1;
             if (this.topologyID != stopID) {
+                // TODO: Async?
                 Thread broadcastThread = new Thread(() => this.nextNode.Broadcast(stopID, beginNext, firstSplit + numberSplits, bytesPerSplit, extraBytes, splitsPerMachine, extraSplits, code, className));
                 broadcastThread.Start();
             }
-
+            
             Thread downloadThread = new Thread(() => getSplits(begin, end, bytesPerSplit, extraSplitBytes, stopID));
             downloadThread.Start();
             this.totalDataToProcess = end - begin;
 
 
-
+            // TODO: Podiamos passar uma ref da splitPool para o worker e tê-lo a ele a
+            //  espera de splits (pode poupar-nos uma thread)
             this.numberSplitsToProcess = numberSplits;
             workerThread = new Thread(() => processSplitsThread(numberSplits, firstSplit));
             workerThread.Start();
@@ -330,16 +336,26 @@ namespace WorkerPMNR {
 
         public int[] Connect(string workerURL) {
             this.totalNodes++;
+            int newTopologyId = topologyID + 1;
 
             if (nextNode != null) {   //Compute the ID of the node that shall stop broadcasting
                 int stopID = mod((this.topologyID - 1), totalNodes);
-                nextNode.JoinBroadcast(stopID, this.topologyID + 1);
+                nextNode.JoinBroadcast(stopID, newTopologyId, newTopologyId, workerURL);
             }
 
+            // Inserts in list the new WorkerURL
+            // It is inserted after my own URL so the list stays ordered
+            remoteWorkers.Insert(newTopologyId, workerURL);
+
             //Update nextNodes references, both for the new node and the entry point node
+            // TODO: O prof disse que se houvesse uma chamada a um objecto remoto dentro de uma chamada desse objecto remoto
+            //  podia haver problemas
             nextNode = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), workerURL);
-            nextNode.SetNextNodeURL(nextNodeURL);
+            nextNode.SetNextNodeURL(nextNodeURL, remoteWorkers);
             nextNodeURL = workerURL;
+
+            
+
             Console.WriteLine("Connect -> ID: " + this.id + " TopologyID: " + this.topologyID + " totalNodes: " + this.totalNodes);
             //Returns to the new Node it's ID and Total Nodes in the ring
             return new int[] { topologyID + 1, totalNodes };
@@ -347,15 +363,16 @@ namespace WorkerPMNR {
 
 
 
-        public void JoinBroadcast(int stopID, int previousNodeID) {
+        public void JoinBroadcast(int stopID, int previousNodeID, int newTopologyId, string newWorker) {
             //The node receiving the broadcast updates the number of Total Nodes in the System
             // and computes it's new ID
 
             totalNodes++;
             this.topologyID = mod((previousNodeID + 1), totalNodes);
+            this.remoteWorkers.Insert(newTopologyId, newWorker);
             Console.WriteLine("JoinBroadcast -> ID: " + /*this.id + ", topologyID: " +*/ this.topologyID + " totalNodes: " + this.totalNodes);
             if (stopID != this.topologyID) {
-                nextNode.JoinBroadcast(stopID, this.topologyID);
+                nextNode.JoinBroadcast(stopID, this.topologyID, newTopologyId, newWorker);
             }
         }
 
@@ -367,6 +384,11 @@ namespace WorkerPMNR {
             }
             else Console.WriteLine("No Job is currently being performed");
             Console.WriteLine("Worker ID: " + this.id + " TopologyID: " + this.topologyID + " totalNodes: " + this.totalNodes);
+            Console.WriteLine("===================================================");
+            Console.WriteLine("Remote Workers list:");
+            foreach (string remoteWorker in remoteWorkers) {
+                Console.WriteLine(remoteWorker);
+            }
             Console.WriteLine("===================================================");
         }
 

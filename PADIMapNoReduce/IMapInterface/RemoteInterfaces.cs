@@ -14,8 +14,8 @@ namespace InterfacePMNR {
         void JobMetaData(int numberSplits, int numLines, byte[] code, string className);
         void Broadcast(int stopID, int begin, int firstSplit, int bytesPerSplit, int extraBytes, int splitsPerMachine, int extraSplits, byte[] code, string className);
         int[] Connect(string workerURL);
-        void JoinBroadcast(int stopID, int previousNodeID);
-        void SetNextNodeURL(string workerURL);
+        void JoinBroadcast(int stopID, int previousNodeID, int newTopologyId, string newWorker);
+        void SetNextNodeURL(string workerURL, IList<string> remoteWorkers);
         void SetClientURL(string clientURL);
         void BroadcastClient(int stopId, string clientURL);
         void Slow(int secondsDelay);

@@ -27,6 +27,7 @@ namespace WorkerPMNR {
             Uri baseUri = new Uri(serviceURL);
             int port = baseUri.Port;
 
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
             Console.WriteLine("ServiceURL: " + serviceURL);
             Console.WriteLine("EntryPointURL: " + entryPointURL);
 
@@ -40,8 +41,7 @@ namespace WorkerPMNR {
 
             if (entryPointURL != "NOENTRYPOINT")
                 remoteWorker.ConnectToChain(entryPointURL, serviceURL);
-
-            Console.WriteLine("<enter> para sair...");
+            Console.ResetColor();
             Console.ReadLine();
         }
 
@@ -160,7 +160,9 @@ namespace WorkerPMNR {
                 int stopID = mod((this.topologyID - 1), totalNodes);
                 nextNode.BroadcastClient(stopID, clientURL);
             }
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
             Console.WriteLine("Client: " + clientURL);
+            Console.ResetColor();
             client = (RemoteClientInterface)Activator.GetObject(typeof(RemoteClientInterface), clientURL);
         }
 
@@ -171,7 +173,9 @@ namespace WorkerPMNR {
         public void BroadcastClient(int stopId, string clientURL) {
             this.clientURL = clientURL;
             client = (RemoteClientInterface)Activator.GetObject(typeof(RemoteClientInterface), clientURL);
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
             Console.WriteLine("Client: " + clientURL);
+            Console.ResetColor();
             if (this.topologyID != stopId && nextNode != null) {
                 nextNode.BroadcastClient(stopId, clientURL);
             }
@@ -182,7 +186,9 @@ namespace WorkerPMNR {
             /*if (nextNode == null) {
                 Timer TimerItem = new Timer(TimerDelegate, new object(), TIMEOUT, TIMEOUT);
             }*/
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
             Console.WriteLine("NextNodeURL: " + workerURL);
+            Console.ResetColor();
             nextNode = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), workerURL);
             nextNodeURL = workerURL;
             this.remoteWorkers = remoteWorkers;
@@ -351,7 +357,9 @@ namespace WorkerPMNR {
             int[] connectionData = remoteWorkerConnector.Connect(newNodeURL);
             this.topologyID = connectionData[0];
             this.totalNodes = connectionData[1];
-            Console.WriteLine("ConnectToChain -> ID: " + this.id + " TopologyID: " + this.topologyID + " totalNodes: " + this.totalNodes);
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.WriteLine("ConnectToChain -> ID: {0} topologyID: {1} totalNodes: {2}", this.id, this.topologyID, this.totalNodes);
+            Console.ResetColor();
         }
 
 
@@ -377,8 +385,10 @@ namespace WorkerPMNR {
             nextNode = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), workerURL);
             nextNode.SetNextNodeURL(nextNodeURL, remoteWorkers);
             nextNodeURL = workerURL;
-
-            Console.WriteLine("Connect -> ID: " + this.id + " TopologyID: " + this.topologyID + " totalNodes: " + this.totalNodes);
+            
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.WriteLine("Connect -> ID: {0} topologyID: {1} totalNodes: {2}", this.id, this.topologyID, this.totalNodes);
+            Console.ResetColor();
             //Returns to the new Node it's ID and Total Nodes in the ring
             return new int[] { topologyID + 1, totalNodes };
         }
@@ -392,7 +402,9 @@ namespace WorkerPMNR {
             totalNodes++;
             this.topologyID = mod((previousNodeID + 1), totalNodes);
             this.remoteWorkers.Insert(newTopologyId, newWorker);
-            Console.WriteLine("JoinBroadcast -> ID: " + /*this.id + ", topologyID: " +*/ this.topologyID + " totalNodes: " + this.totalNodes);
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.WriteLine("JoinBroadcast -> ID: {0} topologyID: {1} totalNodes: {2}", this.id, this.topologyID, this.totalNodes);
+            Console.ResetColor();
             if (stopID != this.topologyID) {
                 nextNode.JoinBroadcast(stopID, this.topologyID, newTopologyId, newWorker);
             }
@@ -400,25 +412,14 @@ namespace WorkerPMNR {
 
         private void CheckAlive(object StateObj) {
             if (remoteWorkers.Count > 1) {
-                // From the node behind him
-                /*int previousTopologyId = mod((this.topologyID - 1), totalNodes);
-                string previousWorkerURL = remoteWorkers[previousTopologyId];
-
-                RemoteWorkerInterface previousWorker = 
-                    (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), previousWorkerURL);
-                */
-                // TODO: we can make a more traditional imAlive with async calls
-
-                //RemoteAsyncDelegate RemoteDel = new RemoteAsyncDelegate(previousWorker.Check);
-                // Call delegate to remote method
-                //IAsyncResult RemAr = RemoteDel.BeginInvoke(null, null);
-
                 try {
                     this.nextNode.Check();
                 }
                 catch (SocketException) {
-                    // TODO: Handle Failure
-                    Console.WriteLine("{0} has died - Initiate CPR protocol", this.nextNodeURL);
+                    Console.BackgroundColor = ConsoleColor.DarkRed;
+                    Console.ForegroundColor = ConsoleColor.White;
+                    Console.WriteLine("Worker {0} has died - Initiate CPR protocol", this.nextNodeURL);
+                    Console.ResetColor();
                     RepairTopologyChain();
                 }
             }
@@ -427,6 +428,7 @@ namespace WorkerPMNR {
         private void RepairTopologyChain() {
             // TODO: E se o proximo no tambem estiver morto?
             // E se passarmos a ser o unico no?
+            //DB: Apenas suportamos uma falha, o outro não vai estar morto
             int deadNodeID = mod((this.topologyID + 1), totalNodes);
             string deadNodeURL = nextNodeURL;
 
@@ -434,13 +436,21 @@ namespace WorkerPMNR {
             this.totalNodes--;
 
             string newNextNode = remoteWorkers[newNextNodeID];
+            Console.BackgroundColor = ConsoleColor.DarkRed;
+            Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("Repaired - NextNodeURL: " + newNextNode);
+            Console.ResetColor();
             nextNode = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), newNextNode);
             nextNodeURL = newNextNode;
 
             remoteWorkers.RemoveAt(deadNodeID);
-            // TODO: Supostamente o nosso indice nem muda
-            this.topologyID = remoteWorkers.IndexOf(this.url);
+
+            //Inform PuppetMasters of node failure
+            puppetMaster.RegisterLostWorker(deadNodeID, deadNodeURL);
+
+            //Update TopID if we detect a failure at start of the chain
+            if (this.topologyID > deadNodeID)
+                this.topologyID--;
 
             int stopID = mod((this.topologyID - 1), totalNodes);
 
@@ -472,16 +482,18 @@ namespace WorkerPMNR {
 
         public void RepairTopologyChain(int stopID, int deadNodeID) {
             // remove failed nodes from list
+            totalNodes--;
 
             //Should be made async
             string deadNodeURL = remoteWorkers[deadNodeID];
-            Console.WriteLine("Node Fell: " + deadNodeID + " " + deadNodeURL);
-            // TODO: Todos os nos avisam o puppetMaster que o no falhou?
-            puppetMaster.RegisterLostWorker(deadNodeID, deadNodeURL);
-
+            Console.BackgroundColor = ConsoleColor.DarkRed;
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("Node Down: {0} - {1}", deadNodeID, deadNodeURL);
+            Console.ResetColor();
             remoteWorkers.RemoveAt(deadNodeID);
-            // TODO: Se TopologyId > deadNodeID entao TopologyId--
-            this.topologyID = remoteWorkers.IndexOf(this.url);
+
+            if (this.topologyID > deadNodeID)
+                this.topologyID--;
 
             if (this.topologyID != stopID) {
                 nextNode.RepairTopologyChain(stopID, deadNodeID);
@@ -490,27 +502,29 @@ namespace WorkerPMNR {
 
         // Just to check connection
         public void Check() {
+            Console.BackgroundColor = ConsoleColor.DarkGreen;
+            Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("I am Alive");
+            Console.ResetColor();
         }
 
         public void PrintStatus() {
+            Console.BackgroundColor = ConsoleColor.DarkBlue;
+            Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("==================CURRENT STATUS===================");
             if (worker != null) {
-                Console.WriteLine("Processing line " + worker.GetCurrentLineProcess() + "/" + worker.GetTotalSplitLinesProcess() + " of split " + this.currentSplit + " which has " + this.currentSplitSize + " bytes");
-                Console.WriteLine("Received " + totalDataToProcess + " total bytes to process in " + numberSplitsToProcess + " splits");
+                Console.WriteLine("Processing line {0} /  {1} of split {2} which has {3} bytes", worker.GetCurrentLineProcess(), worker.GetTotalSplitLinesProcess(), this.currentSplit, this.currentSplitSize);
+                Console.WriteLine("Received {0} total bytes to process in {1} splits", totalDataToProcess, numberSplitsToProcess);
             }
             else Console.WriteLine("No Job is currently being performed");
-            Console.WriteLine("Worker ID: " + this.id + " TopologyID: " + this.topologyID + " totalNodes: " + this.totalNodes);
+            Console.WriteLine("Worker ID: {0} TopologyID: {1} totalNodes: {2}", this.id, this.topologyID, this.totalNodes);
             Console.WriteLine("===================================================");
             Console.WriteLine("Remote Workers list:");
             foreach (string remoteWorker in remoteWorkers) {
                 Console.WriteLine(remoteWorker);
             }
             Console.WriteLine("===================================================");
-            //DEBUG
-            foreach (string remoteWorker in remoteWorkers) {
-                Console.WriteLine("worker: {0}", remoteWorker);
-            }
+            Console.ResetColor();
         }
 
         private List<string> LowMemSplit(ref string s, string seperator) {

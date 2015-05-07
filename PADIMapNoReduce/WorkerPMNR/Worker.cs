@@ -130,7 +130,12 @@ namespace WorkerPMNR {
         private TimerCallback TimerDelegate;
         private const int TIMEOUT = 10000;
 
-        public delegate void RemoteAsyncDelegate();
+        public delegate void IdLocationDelegate(int stopId, string clientURL);
+        public delegate void splitResultDelegate(string result, int splitId);
+        public delegate void BroadcastDelegate(int stopID, int begin, int firstSplit, int bytesPerSplit, int extraBytes, int splitsPerMachine, int extraSplits, byte[] code, string className);
+        public delegate void JoinBroadcastDelegate(int stopID, int previousNodeID, int newTopologyId, string newWorker);
+        public delegate void SetNextNodeURLDelegate(string workerURL, IList<string> remoteWorkers);
+        public delegate void RepairTopologyDelegate(int stopID, int deadNodeID);
 
         //infinite lifetime
         public override object InitializeLifetimeService() {
@@ -158,7 +163,9 @@ namespace WorkerPMNR {
         public void SetClientURL(string clientURL) {
             if (nextNode != null) {
                 int stopID = mod((this.topologyID - 1), totalNodes);
-                nextNode.BroadcastClient(stopID, clientURL);
+
+                IdLocationDelegate RemoteDel = new IdLocationDelegate(nextNode.BroadcastClient);
+                RemoteDel.BeginInvoke(stopID, clientURL, null, null);
             }
             Console.ForegroundColor = ConsoleColor.DarkYellow;
             Console.WriteLine("Client: " + clientURL);
@@ -177,15 +184,13 @@ namespace WorkerPMNR {
             Console.WriteLine("Client: " + clientURL);
             Console.ResetColor();
             if (this.topologyID != stopId && nextNode != null) {
-                nextNode.BroadcastClient(stopId, clientURL);
+                IdLocationDelegate RemoteDel = new IdLocationDelegate(nextNode.BroadcastClient);
+                RemoteDel.BeginInvoke(stopId, clientURL, null, null);
             }
         }
 
 
         public void SetNextNodeURL(string workerURL, IList<string> remoteWorkers) {
-            /*if (nextNode == null) {
-                Timer TimerItem = new Timer(TimerDelegate, new object(), TIMEOUT, TIMEOUT);
-            }*/
             Console.ForegroundColor = ConsoleColor.DarkYellow;
             Console.WriteLine("NextNodeURL: " + workerURL);
             Console.ResetColor();
@@ -194,13 +199,6 @@ namespace WorkerPMNR {
             this.remoteWorkers = remoteWorkers;
         }
 
-        /*private void checkNewNextNodeURL(int newNextNodeID) {
-            string newNextNode = remoteWorkers[newNextNodeID];
-            Console.WriteLine("Repaired - NextNodeURL: " + newNextNode);
-            nextNode = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), newNextNode);
-            nextNodeURL = newNextNode;
-            nextNode.Check();
-        }*/
 
         private int mod(int x, int m) {
             return (x % m + m) % m;
@@ -237,9 +235,9 @@ namespace WorkerPMNR {
 
             int beginNext = end + 1;
             if (this.topologyID != stopID) {
-                // TODO: Async?
-                Thread broadcastThread = new Thread(() => this.nextNode.Broadcast(stopID, beginNext, firstSplit + numberSplits, bytesPerSplit, extraBytes, splitsPerMachine, extraSplits, code, className));
-                broadcastThread.Start();
+
+                BroadcastDelegate RemoteDel = new BroadcastDelegate(this.nextNode.Broadcast);
+                RemoteDel.BeginInvoke(stopID, beginNext, firstSplit + numberSplits, bytesPerSplit, extraBytes, splitsPerMachine, extraSplits, code, className, null, null);
             }
             
             Thread downloadThread = new Thread(() => getSplits(begin, end, bytesPerSplit, extraSplitBytes, stopID));
@@ -313,7 +311,9 @@ namespace WorkerPMNR {
                 //Console.WriteLine("Result: " + result);
                 //Console.WriteLine("SentSplit " + splitId);
                 #endregion
-                client.sendProcessedSplit(result.ToString(), splitId);
+                splitResultDelegate RemoteDel = new splitResultDelegate(client.sendProcessedSplit);
+                RemoteDel.BeginInvoke(result.ToString(), splitId, null, null);
+
                 splitId++;
                 myNumberSplits--;
             }
@@ -370,10 +370,10 @@ namespace WorkerPMNR {
 
             if (nextNode != null) {   //Compute the ID of the node that shall stop broadcasting
                 int stopID = mod((this.topologyID - 1), totalNodes);
-                nextNode.JoinBroadcast(stopID, newTopologyId, newTopologyId, workerURL);
-            } /*else {
-                Timer TimerItem = new Timer(TimerDelegate, new object(), TIMEOUT, TIMEOUT);
-            }*/
+                JoinBroadcastDelegate RemoteDel = new JoinBroadcastDelegate(nextNode.JoinBroadcast);
+                RemoteDel.BeginInvoke(stopID, newTopologyId, newTopologyId, workerURL, null, null);
+
+            } 
 
             // Inserts in list the new WorkerURL
             // It is inserted after my own URL so the list stays ordered
@@ -383,7 +383,9 @@ namespace WorkerPMNR {
             // TODO: O prof disse que se houvesse uma chamada a um objecto remoto dentro de uma chamada desse objecto remoto
             //  podia haver problemas
             nextNode = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), workerURL);
-            nextNode.SetNextNodeURL(nextNodeURL, remoteWorkers);
+
+            SetNextNodeURLDelegate nextNodeUrlDel = new SetNextNodeURLDelegate(nextNode.SetNextNodeURL);
+            nextNodeUrlDel.BeginInvoke(nextNodeURL, remoteWorkers, null, null);
             nextNodeURL = workerURL;
             
             Console.ForegroundColor = ConsoleColor.DarkYellow;
@@ -406,7 +408,8 @@ namespace WorkerPMNR {
             Console.WriteLine("JoinBroadcast -> ID: {0} topologyID: {1} totalNodes: {2}", this.id, this.topologyID, this.totalNodes);
             Console.ResetColor();
             if (stopID != this.topologyID) {
-                nextNode.JoinBroadcast(stopID, this.topologyID, newTopologyId, newWorker);
+                JoinBroadcastDelegate RemoteDel = new JoinBroadcastDelegate(nextNode.JoinBroadcast);
+                RemoteDel.BeginInvoke(stopID, this.topologyID, newTopologyId, newWorker, null, null);
             }
         }
 
@@ -426,9 +429,6 @@ namespace WorkerPMNR {
         }
 
         private void RepairTopologyChain() {
-            // TODO: E se o proximo no tambem estiver morto?
-            // E se passarmos a ser o unico no?
-            //DB: Apenas suportamos uma falha, o outro não vai estar morto
             int deadNodeID = mod((this.topologyID + 1), totalNodes);
             string deadNodeURL = nextNodeURL;
 
@@ -446,7 +446,8 @@ namespace WorkerPMNR {
             remoteWorkers.RemoveAt(deadNodeID);
 
             //Inform PuppetMasters of node failure
-            puppetMaster.RegisterLostWorker(deadNodeID, deadNodeURL);
+            IdLocationDelegate RemoteDel = new IdLocationDelegate(puppetMaster.RegisterLostWorker);
+            RemoteDel.BeginInvoke(deadNodeID, deadNodeURL, null, null);
 
             //Update TopID if we detect a failure at start of the chain
             if (this.topologyID > deadNodeID)
@@ -454,8 +455,10 @@ namespace WorkerPMNR {
 
             int stopID = mod((this.topologyID - 1), totalNodes);
 
-            if(totalNodes > 1)
-                nextNode.RepairTopologyChain(stopID, deadNodeID);
+            if (totalNodes > 1) {
+                RepairTopologyDelegate RepairDel = new RepairTopologyDelegate(nextNode.RepairTopologyChain);
+                RepairDel.BeginInvoke(stopID, deadNodeID, null, null);
+            }
 
             
 
@@ -496,7 +499,8 @@ namespace WorkerPMNR {
                 this.topologyID--;
 
             if (this.topologyID != stopID) {
-                nextNode.RepairTopologyChain(stopID, deadNodeID);
+                RepairTopologyDelegate RemoteDel = new RepairTopologyDelegate(nextNode.RepairTopologyChain);
+                RemoteDel.BeginInvoke(stopID, deadNodeID, null, null);
             }
         }
 

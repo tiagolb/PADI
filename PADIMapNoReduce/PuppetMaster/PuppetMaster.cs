@@ -28,6 +28,10 @@ namespace PuppetMasterPMNR {
         private int port;
         private RemotePuppetMaster remotePuppetMaster;
 
+        public delegate void PrintDelegate();
+        public delegate void ThrottleDelegate(int id);
+        public delegate void WorkerDelegate(int workerID, string serviceURL);
+
         public PuppetMaster(PuppetMasterForm form, int port) {
             this.puppetMasterForm = form;
             this.puppetMasters = new List<string>();
@@ -132,7 +136,8 @@ namespace PuppetMasterPMNR {
             //Makes each puppet master tell its workers to print status
             foreach (string pmAddress in puppetMasters) {
                 RemotePuppetMasterInterface pm = (RemotePuppetMasterInterface)Activator.GetObject(typeof(RemotePuppetMasterInterface), pmAddress);
-                pm.PrintWorkerStatus();
+                PrintDelegate RemoteDel = new PrintDelegate(pm.PrintWorkerStatus);
+                RemoteDel.BeginInvoke(null, null);
             }
             //print worker status from this machine workers
             printWorkerStatus();
@@ -153,7 +158,8 @@ namespace PuppetMasterPMNR {
             }
 
             RemoteWorkerInterface w = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), serviceURL);
-            w.Slow(secondsDelay);
+            ThrottleDelegate RemoteDel = new ThrottleDelegate(w.Slow);
+            RemoteDel.BeginInvoke(secondsDelay, null, null);
         }
 
         public void FREEZEW(int id){
@@ -180,7 +186,8 @@ namespace PuppetMasterPMNR {
 
             foreach (string rpm in puppetMasters) {
                 RemotePuppetMasterInterface pm = (RemotePuppetMasterInterface)Activator.GetObject(typeof(RemotePuppetMasterInterface), rpm);
-                pm.ReceiveWorker(workerID, serviceURL);
+                WorkerDelegate RemoteDel = new WorkerDelegate(pm.ReceiveWorker);
+                RemoteDel.BeginInvoke(workerID, serviceURL, null, null);
             }
         }
 
@@ -189,7 +196,8 @@ namespace PuppetMasterPMNR {
                 Uri baseUri = new Uri(k.Value);
                 if (baseUri.Host.Equals(this.host)) {
                     RemoteWorkerInterface rw = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), k.Value);
-                    rw.PrintStatus();
+                    PrintDelegate RemoteDel = new PrintDelegate(rw.PrintStatus);
+                    RemoteDel.BeginInvoke(null, null);
                 }
             }
             puppetMasterForm.BeginInvoke((Action)delegate {
@@ -206,9 +214,9 @@ namespace PuppetMasterPMNR {
             foreach (string rpm in puppetMasters)
             {
                 RemotePuppetMasterInterface pm = (RemotePuppetMasterInterface)Activator.GetObject(typeof(RemotePuppetMasterInterface), rpm);
-                pm.RefreshWorkersOnFail(id, workerURL);
+                WorkerDelegate RemoteDel = new WorkerDelegate(pm.RefreshWorkersOnFail);
+                RemoteDel.BeginInvoke(id, workerURL, null, null);
             }
-
             RefreshWorkers(id, workerURL);
         }
 

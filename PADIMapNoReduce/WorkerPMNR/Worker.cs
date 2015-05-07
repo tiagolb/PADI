@@ -440,7 +440,9 @@ namespace WorkerPMNR {
             this.topologyID = remoteWorkers.IndexOf(this.url);
 
             int stopID = mod((this.topologyID - 1), totalNodes);
-            nextNode.RepairTopologyChain(stopID, deadNodeID);
+
+            if(totalNodes > 1)
+                nextNode.RepairTopologyChain(stopID, deadNodeID);
 
             
 

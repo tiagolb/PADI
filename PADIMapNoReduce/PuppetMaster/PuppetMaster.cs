@@ -66,7 +66,7 @@ namespace PuppetMasterPMNR {
 
             if (puppetMasterURL.Equals(GetURI()) || baseUri.IsLoopback) {
 
-                string[] args = { id.ToString(), serviceURL, entryURL };
+                string[] args = { id.ToString(), serviceURL, entryURL, puppetMasterURL };
 
                 Process p = new Process();
                 p.StartInfo.UseShellExecute = false;
@@ -200,6 +200,34 @@ namespace PuppetMasterPMNR {
         public void SetJobTracker(KeyValuePair<int, string> jobtracker) {
             this.jobtracker = jobtracker;
         }
+
+
+        public void ClearWorker(int id, string workerURL) {
+            foreach (string rpm in puppetMasters)
+            {
+                RemotePuppetMasterInterface pm = (RemotePuppetMasterInterface)Activator.GetObject(typeof(RemotePuppetMasterInterface), rpm);
+                pm.RefreshWorkersOnFail(id, workerURL);
+            }
+
+            RefreshWorkers(id, workerURL);
+        }
+
+        public void RefreshWorkers(int id, string workerURL) {
+            //workplace.Remove(new KeyValuePair<int, string>(id, workerURL));
+            KeyValuePair<int, string> toRemove = new KeyValuePair<int,string>();
+
+            foreach (KeyValuePair<int, string> k in workplace) {
+                if ( k.Value == workerURL)
+                    toRemove = k;
+            }
+
+            workplace.Remove(toRemove);
+
+            puppetMasterForm.BeginInvoke((Action)delegate
+            {
+                puppetMasterForm.SetWorkers(workplace, jobtracker);
+            });
+        }
     }
 
 
@@ -240,7 +268,15 @@ namespace PuppetMasterPMNR {
         }
 
         public void ReceiveJobTracker(KeyValuePair<int, string> jobtracker) {
-            this.puppetMaster.SetJobTracker(jobtracker);
+            puppetMaster.SetJobTracker(jobtracker);
+        }
+
+        public void RegisterLostWorker(int id, string workerURL) {
+            puppetMaster.ClearWorker(id, workerURL);
+        }
+
+        public void RefreshWorkersOnFail(int id, string workerURL) {
+            puppetMaster.RefreshWorkers(id, workerURL);
         }
     }
 }

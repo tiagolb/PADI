@@ -22,6 +22,7 @@ namespace WorkerPMNR {
             int id = Int32.Parse(args[0]);
             string serviceURL = args[1];
             string entryPointURL = args[2];
+            string puppetMasterURL = args[3];
             string host = "" + Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
             Uri baseUri = new Uri(serviceURL);
             int port = baseUri.Port;
@@ -32,9 +33,10 @@ namespace WorkerPMNR {
 
             TcpChannel channel = new TcpChannel(port);
             ChannelServices.RegisterChannel(channel, false);
-            RemoteWorker remoteWorker = new RemoteWorker(serviceURL, id);
+            RemoteWorker remoteWorker = new RemoteWorker(serviceURL, puppetMasterURL, id);
 
             RemotingServices.Marshal(remoteWorker, "W", typeof(RemoteWorkerInterface));
+
 
             if (entryPointURL != "NOENTRYPOINT")
                 remoteWorker.ConnectToChain(entryPointURL, serviceURL);
@@ -120,6 +122,7 @@ namespace WorkerPMNR {
         private Worker worker;
         private RemoteWorkerInterface nextNode;
         private RemoteClientInterface client;
+        private RemotePuppetMasterInterface puppetMaster;
         private string nextNodeURL;
         private string clientURL;
         private SplitPool<IList<string>> splitPool;
@@ -133,19 +136,20 @@ namespace WorkerPMNR {
         public override object InitializeLifetimeService() {
             return null;
         }
-
+                  
         // Thread 
         Thread workerThread;
 
         public RemoteWorker() { }
 
-        public RemoteWorker(string serviceURL, int id) {
+        public RemoteWorker(string serviceURL, string puppetMasterURL, int id) {
             this.url = serviceURL;
             this.totalNodes = 1;
             this.id = id;
             this.nextNodeURL = this.url;
             this.remoteWorkers = new List<string>();
             this.remoteWorkers.Add(this.url);
+            this.puppetMaster = (RemotePuppetMasterInterface)Activator.GetObject(typeof(RemotePuppetMasterInterface), puppetMasterURL);
 
             TimerDelegate = new TimerCallback(CheckAlive);
             Timer TimerItem = new Timer(TimerDelegate, new object(), TIMEOUT, TIMEOUT);
@@ -463,6 +467,12 @@ namespace WorkerPMNR {
 
         public void RepairTopologyChain(int stopID, int deadNodeID) {
             // remove failed nodes from list
+
+            //Should be made async
+            string deadNodeURL = remoteWorkers[deadNodeID];
+            Console.WriteLine("Node Fell: " + deadNodeID + " " + deadNodeURL);
+            puppetMaster.RegisterLostWorker(deadNodeID, deadNodeURL);
+
             remoteWorkers.RemoveAt(deadNodeID);
             this.topologyID = remoteWorkers.IndexOf(this.url);
 

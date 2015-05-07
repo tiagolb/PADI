@@ -30,5 +30,7 @@ namespace InterfacePMNR {
         void ReceiveWorker(int workerID, string serviceURL);
         void PrintWorkerStatus();
         void ReceiveJobTracker(KeyValuePair<int, string> jobtracker);
+        void RegisterLostWorker(int id, string workerURL);
+        void RefreshWorkersOnFail(int id, string workerURL);
     }
 }

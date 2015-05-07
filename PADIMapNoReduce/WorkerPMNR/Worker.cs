@@ -425,6 +425,8 @@ namespace WorkerPMNR {
         }
 
         private void RepairTopologyChain() {
+            // TODO: E se o proximo no tambem estiver morto?
+            // E se passarmos a ser o unico no?
             int deadNodeID = mod((this.topologyID + 1), totalNodes);
             string deadNodeURL = nextNodeURL;
 
@@ -437,6 +439,7 @@ namespace WorkerPMNR {
             nextNodeURL = newNextNode;
 
             remoteWorkers.RemoveAt(deadNodeID);
+            // TODO: Supostamente o nosso indice nem muda
             this.topologyID = remoteWorkers.IndexOf(this.url);
 
             int stopID = mod((this.topologyID - 1), totalNodes);
@@ -473,9 +476,11 @@ namespace WorkerPMNR {
             //Should be made async
             string deadNodeURL = remoteWorkers[deadNodeID];
             Console.WriteLine("Node Fell: " + deadNodeID + " " + deadNodeURL);
+            // TODO: Todos os nos avisam o puppetMaster que o no falhou?
             puppetMaster.RegisterLostWorker(deadNodeID, deadNodeURL);
 
             remoteWorkers.RemoveAt(deadNodeID);
+            // TODO: Se TopologyId > deadNodeID entao TopologyId--
             this.topologyID = remoteWorkers.IndexOf(this.url);
 
             if (this.topologyID != stopID) {

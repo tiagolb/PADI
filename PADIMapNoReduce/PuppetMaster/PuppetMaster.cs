@@ -192,14 +192,24 @@ namespace PuppetMasterPMNR {
         }
 
         public void printWorkerStatus() {
-            foreach (KeyValuePair<int, string> k in workplace) {
-                Uri baseUri = new Uri(k.Value);
-                if (baseUri.Host.Equals(this.host)) {
-                    RemoteWorkerInterface rw = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), k.Value);
-                    PrintDelegate RemoteDel = new PrintDelegate(rw.PrintStatus);
-                    RemoteDel.BeginInvoke(null, null);
+            try
+            {
+                foreach (KeyValuePair<int, string> k in workplace)
+                {
+                    Uri baseUri = new Uri(k.Value);
+                    if (baseUri.Host.Equals(this.host))
+                    {
+                        RemoteWorkerInterface rw = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), k.Value);
+                        PrintDelegate RemoteDel = new PrintDelegate(rw.PrintStatus);
+                        RemoteDel.BeginInvoke(null, null);
+                    }
                 }
             }
+            catch (InvalidOperationException)
+            {
+               //Wait for chain reconstruction operation
+            }
+
             puppetMasterForm.BeginInvoke((Action)delegate {
                 puppetMasterForm.SetWorkers(workplace, jobtracker);
             });

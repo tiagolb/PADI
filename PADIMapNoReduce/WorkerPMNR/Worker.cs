@@ -27,13 +27,21 @@ namespace WorkerPMNR {
             Uri baseUri = new Uri(serviceURL);
             int port = baseUri.Port;
 
+            try
+            {
+                TcpChannel channel = new TcpChannel(port);
+                ChannelServices.RegisterChannel(channel, false);
+            }
+            catch (SocketException) {
+                Console.WriteLine("A worker is already registered at port {0}. Press <Enter> to close this process", port);
+                Console.ReadLine();
+                Environment.Exit(0);
+            }
+
             Console.ForegroundColor = ConsoleColor.DarkYellow;
             Console.WriteLine("ServiceURL: " + serviceURL);
             Console.WriteLine("EntryPointURL: " + entryPointURL);
 
-
-            TcpChannel channel = new TcpChannel(port);
-            ChannelServices.RegisterChannel(channel, false);
             RemoteWorker remoteWorker = new RemoteWorker(serviceURL, puppetMasterURL, id);
 
             RemotingServices.Marshal(remoteWorker, "W", typeof(RemoteWorkerInterface));

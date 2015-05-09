@@ -42,6 +42,9 @@
             this.lb_puppetHost = new System.Windows.Forms.Label();
             this.lb_workers = new System.Windows.Forms.ListBox();
             this.lb_presentWorkers = new System.Windows.Forms.Label();
+            this.bt_status = new System.Windows.Forms.Button();
+            this.bt_step = new System.Windows.Forms.Button();
+            this.bt_runScript = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // lb_PuppetMasterURL
@@ -64,7 +67,7 @@
             // bt_script
             // 
             this.bt_script.Enabled = false;
-            this.bt_script.Location = new System.Drawing.Point(16, 221);
+            this.bt_script.Location = new System.Drawing.Point(15, 233);
             this.bt_script.Name = "bt_script";
             this.bt_script.Size = new System.Drawing.Size(75, 23);
             this.bt_script.TabIndex = 4;
@@ -79,7 +82,7 @@
             // tb_scriptFileName
             // 
             this.tb_scriptFileName.Enabled = false;
-            this.tb_scriptFileName.Location = new System.Drawing.Point(98, 223);
+            this.tb_scriptFileName.Location = new System.Drawing.Point(97, 235);
             this.tb_scriptFileName.Name = "tb_scriptFileName";
             this.tb_scriptFileName.Size = new System.Drawing.Size(553, 20);
             this.tb_scriptFileName.TabIndex = 5;
@@ -87,7 +90,7 @@
             // tb_scriptFileAddress
             // 
             this.tb_scriptFileAddress.Enabled = false;
-            this.tb_scriptFileAddress.Location = new System.Drawing.Point(16, 251);
+            this.tb_scriptFileAddress.Location = new System.Drawing.Point(15, 263);
             this.tb_scriptFileAddress.Name = "tb_scriptFileAddress";
             this.tb_scriptFileAddress.Size = new System.Drawing.Size(635, 20);
             this.tb_scriptFileAddress.TabIndex = 6;
@@ -95,7 +98,7 @@
             // bt_submitScript
             // 
             this.bt_submitScript.Enabled = false;
-            this.bt_submitScript.Location = new System.Drawing.Point(657, 223);
+            this.bt_submitScript.Location = new System.Drawing.Point(656, 235);
             this.bt_submitScript.Name = "bt_submitScript";
             this.bt_submitScript.Size = new System.Drawing.Size(115, 48);
             this.bt_submitScript.TabIndex = 8;
@@ -106,7 +109,7 @@
             // tb_singleCommand
             // 
             this.tb_singleCommand.Enabled = false;
-            this.tb_singleCommand.Location = new System.Drawing.Point(98, 295);
+            this.tb_singleCommand.Location = new System.Drawing.Point(97, 189);
             this.tb_singleCommand.Name = "tb_singleCommand";
             this.tb_singleCommand.Size = new System.Drawing.Size(553, 20);
             this.tb_singleCommand.TabIndex = 9;
@@ -114,7 +117,7 @@
             // lb_singleCommand
             // 
             this.lb_singleCommand.AutoSize = true;
-            this.lb_singleCommand.Location = new System.Drawing.Point(6, 298);
+            this.lb_singleCommand.Location = new System.Drawing.Point(5, 192);
             this.lb_singleCommand.Name = "lb_singleCommand";
             this.lb_singleCommand.Size = new System.Drawing.Size(86, 13);
             this.lb_singleCommand.TabIndex = 10;
@@ -123,7 +126,7 @@
             // bt_singleCommand
             // 
             this.bt_singleCommand.Enabled = false;
-            this.bt_singleCommand.Location = new System.Drawing.Point(657, 292);
+            this.bt_singleCommand.Location = new System.Drawing.Point(656, 186);
             this.bt_singleCommand.Name = "bt_singleCommand";
             this.bt_singleCommand.Size = new System.Drawing.Size(115, 23);
             this.bt_singleCommand.TabIndex = 11;
@@ -203,11 +206,44 @@
             this.lb_presentWorkers.TabIndex = 20;
             this.lb_presentWorkers.Text = "Workers Present / JobTracker (Selected)";
             // 
+            // bt_status
+            // 
+            this.bt_status.Location = new System.Drawing.Point(304, 363);
+            this.bt_status.Name = "bt_status";
+            this.bt_status.Size = new System.Drawing.Size(85, 23);
+            this.bt_status.TabIndex = 21;
+            this.bt_status.Text = "Check Status";
+            this.bt_status.UseVisualStyleBackColor = true;
+            this.bt_status.Click += new System.EventHandler(this.bt_status_Click);
+            // 
+            // bt_step
+            // 
+            this.bt_step.Location = new System.Drawing.Point(406, 301);
+            this.bt_step.Name = "bt_step";
+            this.bt_step.Size = new System.Drawing.Size(115, 23);
+            this.bt_step.TabIndex = 22;
+            this.bt_step.Text = "Step";
+            this.bt_step.UseVisualStyleBackColor = true;
+            this.bt_step.Click += new System.EventHandler(this.bt_step_Click);
+            // 
+            // bt_runScript
+            // 
+            this.bt_runScript.Location = new System.Drawing.Point(536, 301);
+            this.bt_runScript.Name = "bt_runScript";
+            this.bt_runScript.Size = new System.Drawing.Size(115, 23);
+            this.bt_runScript.TabIndex = 23;
+            this.bt_runScript.Text = "Run";
+            this.bt_runScript.UseVisualStyleBackColor = true;
+            this.bt_runScript.Click += new System.EventHandler(this.bt_runScript_Click);
+            // 
             // PuppetMasterForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(784, 562);
+            this.Controls.Add(this.bt_runScript);
+            this.Controls.Add(this.bt_step);
+            this.Controls.Add(this.bt_status);
             this.Controls.Add(this.lb_presentWorkers);
             this.Controls.Add(this.lb_workers);
             this.Controls.Add(this.tb_puppetHost);
@@ -232,6 +268,7 @@
 
         }
 
+
         #endregion
 
         private System.Windows.Forms.Label lb_PuppetMasterURL;
@@ -253,6 +290,9 @@
         private System.Windows.Forms.Label lb_puppetHost;
         private System.Windows.Forms.ListBox lb_workers;
         private System.Windows.Forms.Label lb_presentWorkers;
+        private System.Windows.Forms.Button bt_status;
+        private System.Windows.Forms.Button bt_step;
+        private System.Windows.Forms.Button bt_runScript;
     }
 }
 

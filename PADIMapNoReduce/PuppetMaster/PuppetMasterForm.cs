@@ -19,6 +19,9 @@ namespace PuppetMasterPMNR {
         PuppetMaster puppetMaster;
 
         private string host;
+        private StreamReader sr;
+        private string s = String.Empty;
+
 
         public PuppetMasterForm() {
             InitializeComponent();
@@ -37,14 +40,8 @@ namespace PuppetMasterPMNR {
         }
 
         private void bt_submitScript_Click(object sender, EventArgs e) {
-            if (tb_scriptFileAddress.Text != "") {
-                using (StreamReader sr = File.OpenText(tb_scriptFileAddress.Text)) {
-                    string s = String.Empty;
-                    while ((s = sr.ReadLine()) != null) {
-                        ProcessCommand(s);
-                    }
-                }
-            }
+            if (tb_scriptFileAddress.Text != "")
+                sr = File.OpenText(tb_scriptFileAddress.Text); 
             else MessageBox.Show("Insert a file path for the script");
         }
 
@@ -122,6 +119,8 @@ namespace PuppetMasterPMNR {
                         if (baseUri.IsLoopback || baseUri.Host.Equals(host)) {
                             puppetMaster = new PuppetMaster(this, baseUri.Port);
                             tb_PuppetMasterURL.Text = "tcp://" + host + ":" + baseUri.Port + "/PM";
+                            bt_openConfig.Enabled = false;
+                            bt_submitConfig.Enabled = false;
                         }
                     }
                 }
@@ -156,5 +155,21 @@ namespace PuppetMasterPMNR {
             lb_workers.SelectedIndex = lb_workers.FindString("Worker ID: " + jobTracker.Key + " | URI: " + jobTracker.Value);
         }
 
+        private void bt_status_Click(object sender, EventArgs e) {
+            if(puppetMaster != null)
+                puppetMaster.STATUS();
+        }
+
+        private void bt_runScript_Click(object sender, EventArgs e) {
+            while ((s = sr.ReadLine()) != null) {
+                ProcessCommand(s);
+            }
+        }
+
+        private void bt_step_Click(object sender, EventArgs e) {
+            if((s = sr.ReadLine()) != null) {
+                ProcessCommand(s);
+            }
+        }
     }
 }

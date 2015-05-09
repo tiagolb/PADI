@@ -161,15 +161,17 @@ namespace PuppetMasterPMNR {
         }
 
         private void bt_runScript_Click(object sender, EventArgs e) {
-            while ((s = sr.ReadLine()) != null) {
-                ProcessCommand(s);
-            }
+            if (sr != null)
+                while ((s = sr.ReadLine()) != null) {
+                    ProcessCommand(s);
+                }
         }
 
         private void bt_step_Click(object sender, EventArgs e) {
-            if((s = sr.ReadLine()) != null) {
-                ProcessCommand(s);
-            }
+            if(sr != null)
+                if((s = sr.ReadLine()) != null) {
+                    ProcessCommand(s);
+                }
         }
     }
 }

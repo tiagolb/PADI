@@ -470,12 +470,15 @@ namespace WorkerPMNR {
                 try {
                     this.nextNode.Check();
                 }
-                catch (Exception) {
-                    Console.BackgroundColor = ConsoleColor.DarkRed;
-                    Console.ForegroundColor = ConsoleColor.White;
-                    Console.WriteLine("Worker {0} has died - Initiate CPR protocol", this.nextNodeURL);
-                    Console.ResetColor();
-                    RepairTopologyChain();
+                catch (Exception ex) {
+                    if (ex is RemotingException || ex is SocketException) {
+                        Console.BackgroundColor = ConsoleColor.DarkRed;
+                        Console.ForegroundColor = ConsoleColor.White;
+                        Console.WriteLine("Worker {0} has died - Initiate CPR protocol", this.nextNodeURL);
+                        Console.ResetColor();
+                        RepairTopologyChain();
+                    }
+                    else throw ex;
                 }
             }
             TimerItem.Change(TIMEOUT, TIMEOUT);

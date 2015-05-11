@@ -1,14 +1,10 @@
 WORKER 1 tcp://localhost:20001/PM tcp://localhost:30001/W
 
 
-WORKER 2 tcp://193.136.154.112:20001/PM tcp://193.136.154.112:30002/W tcp://localhost:30001/W
+WORKER 2 tcp://localhost:20001/PM tcp://localhost:30002/W tcp://localhost:30001/W
 
 
-WORKER 3 tcp://localhost:20001/PM tcp://localhost:30003/W tcp://193.136.154.112:30002/W
+WORKER 3 tcp://localhost:20001/PM tcp://localhost:30003/W tcp://localhost:30002/W
 
 
 SUBMIT tcp://localhost:30001/W C:\temp\pl10.txt C:\temp\out 1001 Mapper Z:\Documents\GitHub\PADI\PADIMapNoReduce\LibMapper\bin\Debug\LibMapper.dll
-
-%WAIT 3
-
-%STATUS

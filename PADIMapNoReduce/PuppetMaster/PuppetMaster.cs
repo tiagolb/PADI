@@ -338,7 +338,7 @@ namespace PuppetMasterPMNR {
         }
 
         public void CreateWorker(int id, string serviceURL, string entryURL) {
-            string[] args = { id.ToString(), serviceURL, entryURL };
+            string[] args = { id.ToString(), serviceURL, entryURL, puppetMaster.GetURI() };
 
             Process p = new Process();
             p.StartInfo.UseShellExecute = false;

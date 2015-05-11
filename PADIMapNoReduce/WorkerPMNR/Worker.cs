@@ -470,7 +470,7 @@ namespace WorkerPMNR {
                 try {
                     this.nextNode.Check();
                 }
-                catch (SocketException) {
+                catch (Exception) {
                     Console.BackgroundColor = ConsoleColor.DarkRed;
                     Console.ForegroundColor = ConsoleColor.White;
                     Console.WriteLine("Worker {0} has died - Initiate CPR protocol", this.nextNodeURL);

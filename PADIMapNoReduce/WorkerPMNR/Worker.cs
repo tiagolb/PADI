@@ -106,8 +106,10 @@ namespace WorkerPMNR {
                 this.delay = 0;
             }
 
-            while (this.frozen) {
-                Monitor.Enter(this);         
+            lock (this) {
+                while (this.frozen) {
+                    Monitor.Wait(this);
+                }
             }
 
             object resultObject = type.InvokeMember("Map",
@@ -124,12 +126,16 @@ namespace WorkerPMNR {
         }
 
         public void ApplyFreeze() {
-            this.frozen = true;
+            lock (this) {
+                this.frozen = true;
+            }
         }
 
         public void ApplyUnfreeze() {
-            this.frozen = false;
-            Monitor.Pulse(this);
+            lock (this) {
+                this.frozen = false;
+                Monitor.Pulse(this);
+            }
         }
     }
 
@@ -152,7 +158,7 @@ namespace WorkerPMNR {
         private SplitPool<IList<string>> splitPool;
         private IList<string> remoteWorkers;
         private TimerCallback TimerDelegate;
-        private const int TIMEOUT = 10000;
+        private const int TIMEOUT = 3000;
         private Timer TimerItem;
         private bool frozenComm;
 
@@ -460,7 +466,7 @@ namespace WorkerPMNR {
         }
 
         private void CheckAlive(object StateObj) {
-            if (remoteWorkers.Count > 1) {
+            if (remoteWorkers.Count > 1 && nextNode != null) {
                 try {
                     this.nextNode.Check();
                 }
@@ -482,15 +488,18 @@ namespace WorkerPMNR {
 
         public void FreezeC() {
             this.frozenComm = true;
+            nextNode = null;
         }
 
-        public void UnfreezeW() {
+        public void UnfreezeW(bool aliveState) {
             worker.ApplyUnfreeze();
-            UnfreezeC();
+            UnfreezeC(aliveState);
         }
 
-        public void UnfreezeC() {
+        public void UnfreezeC(bool aliveState) {
             this.frozenComm = false;
+            if(aliveState)
+                ConnectToChain(nextNodeURL, this.url);
         }
 
         private void RepairTopologyChain() {

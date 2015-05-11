@@ -27,9 +27,12 @@ namespace PuppetMasterPMNR {
         private KeyValuePair<int,string> jobtracker;
         private int port;
         private RemotePuppetMaster remotePuppetMaster;
+        private IList<KeyValuePair<int, string>> frozenWNodes;
+        private IList<KeyValuePair<int, string>> frozenCNodes;
 
         public delegate void PrintDelegate();
         public delegate void FreezeDelegate();
+        public delegate void UnfreezeDelegate(bool aliveState);
         public delegate void ThrottleDelegate(int id);
         public delegate void WorkerDelegate(int workerID, string serviceURL);
 
@@ -37,6 +40,8 @@ namespace PuppetMasterPMNR {
             this.puppetMasterForm = form;
             this.puppetMasters = new List<string>();
             this.workplace = new List<KeyValuePair<int, string>>();
+            this.frozenWNodes = new List<KeyValuePair<int, string>>();
+            this.frozenCNodes = new List<KeyValuePair<int, string>>();
             this.host = "" + Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
             this.port = port;
 
@@ -178,11 +183,13 @@ namespace PuppetMasterPMNR {
             RemoteWorkerInterface w = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), serviceURL);
             FreezeDelegate RemoteDel = new FreezeDelegate(w.FreezeW);
             RemoteDel.BeginInvoke(null, null);
+
+            frozenWNodes.Add(new KeyValuePair<int, string>(id, serviceURL));
         }
 
         public void UNFREEZEW(int id) {
             string serviceURL = null;
-            foreach (KeyValuePair<int, string> k in workplace)
+            foreach (KeyValuePair<int, string> k in frozenWNodes)
                 if (k.Key == id) {
                     serviceURL = k.Value;
                     break;
@@ -192,9 +199,15 @@ namespace PuppetMasterPMNR {
                 return;
             }
 
+            bool aliveState = AmIDead(id, serviceURL);
+
             RemoteWorkerInterface w = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), serviceURL);
-            FreezeDelegate RemoteDel = new FreezeDelegate(w.UnfreezeW);
-            RemoteDel.BeginInvoke(null, null);
+            UnfreezeDelegate RemoteDel = new UnfreezeDelegate(w.UnfreezeW);
+            RemoteDel.BeginInvoke(aliveState, null, null);
+            
+            frozenWNodes.Remove(new KeyValuePair<int, string>(id, serviceURL));
+            ReceiveNewWorker(id, serviceURL);  //Adds workerID , URL pair
+            BroadcastNewWorker(id, serviceURL); //Advertises workerID , URL pair
         }
 
         public void FREEZEC(int id) {
@@ -212,11 +225,13 @@ namespace PuppetMasterPMNR {
             RemoteWorkerInterface w = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), serviceURL);
             FreezeDelegate RemoteDel = new FreezeDelegate(w.FreezeC);
             RemoteDel.BeginInvoke(null, null);
+
+            frozenCNodes.Add(new KeyValuePair<int, string>(id, serviceURL));
         }
 
         public void UNFREEZEC(int id) {
             string serviceURL = null;
-            foreach (KeyValuePair<int, string> k in workplace)
+            foreach (KeyValuePair<int, string> k in frozenCNodes)
                 if (k.Key == id) {
                     serviceURL = k.Value;
                     break;
@@ -226,10 +241,17 @@ namespace PuppetMasterPMNR {
                 return;
             }
 
+            bool aliveState = AmIDead(id, serviceURL);
+
             RemoteWorkerInterface w = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), serviceURL);
-            FreezeDelegate RemoteDel = new FreezeDelegate(w.UnfreezeC);
-            RemoteDel.BeginInvoke(null, null);
+            UnfreezeDelegate RemoteDel = new UnfreezeDelegate(w.UnfreezeC);
+            RemoteDel.BeginInvoke(aliveState, null, null);
+            
+            frozenCNodes.Remove(new KeyValuePair<int, string>(id, serviceURL));
+            ReceiveNewWorker(id, serviceURL);  //Adds workerID , URL pair
+            BroadcastNewWorker(id, serviceURL); //Advertises workerID , URL pair
         }
+
 
         public void ReceiveNewWorker(int id, string serviceURL){
             workplace.Add(new KeyValuePair<int,string>(id,serviceURL));
@@ -298,6 +320,11 @@ namespace PuppetMasterPMNR {
             {
                 puppetMasterForm.SetWorkers(workplace, jobtracker);
             });
+        }
+
+        private bool AmIDead(int id, string workerURL) {
+            KeyValuePair<int, string> worker = new KeyValuePair<int, string>(id, workerURL);
+            return !workplace.Contains(worker);
         }
     }
 

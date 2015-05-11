@@ -21,8 +21,8 @@ namespace InterfacePMNR {
         void Slow(int secondsDelay);
         void FreezeW();
         void FreezeC();
-        void UnfreezeW();
-        void UnfreezeC();
+        void UnfreezeW(bool aliveState);
+        void UnfreezeC(bool aliveState);
         void PrintStatus();
         void Check();
         void RepairTopologyChain(int stopID, int deadNodeID);

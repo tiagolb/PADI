@@ -29,6 +29,7 @@ namespace PuppetMasterPMNR {
         private RemotePuppetMaster remotePuppetMaster;
 
         public delegate void PrintDelegate();
+        public delegate void FreezeDelegate();
         public delegate void ThrottleDelegate(int id);
         public delegate void WorkerDelegate(int workerID, string serviceURL);
 
@@ -163,19 +164,71 @@ namespace PuppetMasterPMNR {
         }
 
         public void FREEZEW(int id){
-            //Disables communication of worker id
+            string serviceURL = null;
+            foreach (KeyValuePair<int, string> k in workplace)
+                if (k.Key == id) {
+                    serviceURL = k.Value;
+                    break;
+                }
+            if (serviceURL == null) {
+                MessageBox.Show("There is no such worker");
+                return;
+            }
+
+            RemoteWorkerInterface w = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), serviceURL);
+            FreezeDelegate RemoteDel = new FreezeDelegate(w.FreezeW);
+            RemoteDel.BeginInvoke(null, null);
         }
 
-        public void UNFREEZEW(int id) { 
-            //Enables communication of worker id
+        public void UNFREEZEW(int id) {
+            string serviceURL = null;
+            foreach (KeyValuePair<int, string> k in workplace)
+                if (k.Key == id) {
+                    serviceURL = k.Value;
+                    break;
+                }
+            if (serviceURL == null) {
+                MessageBox.Show("There is no such worker");
+                return;
+            }
+
+            RemoteWorkerInterface w = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), serviceURL);
+            FreezeDelegate RemoteDel = new FreezeDelegate(w.UnfreezeW);
+            RemoteDel.BeginInvoke(null, null);
         }
 
-        public void FREEZEC(int id) { 
-            //Disables communication of jobtracker in worker id
+        public void FREEZEC(int id) {
+            string serviceURL = null;
+            foreach (KeyValuePair<int, string> k in workplace)
+                if (k.Key == id) {
+                    serviceURL = k.Value;
+                    break;
+                }
+            if (serviceURL == null) {
+                MessageBox.Show("There is no such worker");
+                return;
+            }
+
+            RemoteWorkerInterface w = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), serviceURL);
+            FreezeDelegate RemoteDel = new FreezeDelegate(w.FreezeC);
+            RemoteDel.BeginInvoke(null, null);
         }
 
-        public void UNFREEZEC(int id) { 
-            //Enables communication of jobtracker in worker id
+        public void UNFREEZEC(int id) {
+            string serviceURL = null;
+            foreach (KeyValuePair<int, string> k in workplace)
+                if (k.Key == id) {
+                    serviceURL = k.Value;
+                    break;
+                }
+            if (serviceURL == null) {
+                MessageBox.Show("There is no such worker");
+                return;
+            }
+
+            RemoteWorkerInterface w = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), serviceURL);
+            FreezeDelegate RemoteDel = new FreezeDelegate(w.UnfreezeC);
+            RemoteDel.BeginInvoke(null, null);
         }
 
         public void ReceiveNewWorker(int id, string serviceURL){

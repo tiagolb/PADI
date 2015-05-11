@@ -61,8 +61,11 @@ namespace WorkerPMNR {
         private int currentLineProcess;
         private int totalSplitLinesProcess;
         private int delay;
+        private bool frozen;
 
         public Worker(byte[] code, string className) {
+            this.frozen = false;
+            this.delay = 0;
             Assembly assembly = Assembly.Load(code);
             // Walk through each type in the assembly looking for our class
             foreach (Type type in assembly.GetTypes()) {
@@ -103,6 +106,10 @@ namespace WorkerPMNR {
                 this.delay = 0;
             }
 
+            while (this.frozen) {
+                Monitor.Enter(this);         
+            }
+
             object resultObject = type.InvokeMember("Map",
                    BindingFlags.Default | BindingFlags.InvokeMethod,
                    null,
@@ -114,6 +121,15 @@ namespace WorkerPMNR {
 
         public void ApplyDelay(int secondsDelay) {
             this.delay = secondsDelay;
+        }
+
+        public void ApplyFreeze() {
+            this.frozen = true;
+        }
+
+        public void ApplyUnfreeze() {
+            this.frozen = false;
+            Monitor.Pulse(this);
         }
     }
 
@@ -137,6 +153,8 @@ namespace WorkerPMNR {
         private IList<string> remoteWorkers;
         private TimerCallback TimerDelegate;
         private const int TIMEOUT = 10000;
+        private Timer TimerItem;
+        private bool frozenComm;
 
         public delegate void IdLocationDelegate(int stopId, string clientURL);
         public delegate void splitResultDelegate(string result, int splitId);
@@ -153,9 +171,8 @@ namespace WorkerPMNR {
         // Thread 
         Thread workerThread;
 
-        public RemoteWorker() { }
-
         public RemoteWorker(string serviceURL, string puppetMasterURL, int id) {
+            this.frozenComm = false;
             this.url = serviceURL;
             this.totalNodes = 1;
             this.id = id;
@@ -165,10 +182,13 @@ namespace WorkerPMNR {
             this.puppetMaster = (RemotePuppetMasterInterface)Activator.GetObject(typeof(RemotePuppetMasterInterface), puppetMasterURL);
 
             TimerDelegate = new TimerCallback(CheckAlive);
-            Timer TimerItem = new Timer(TimerDelegate, new object(), TIMEOUT, TIMEOUT);
+            TimerItem = new Timer(TimerDelegate, new object(), TIMEOUT, TIMEOUT);
         }
 
         public void SetClientURL(string clientURL) {
+            if (frozenComm)
+                return;
+
             if (nextNode != null) {
                 int stopID = mod((this.topologyID - 1), totalNodes);
 
@@ -182,10 +202,16 @@ namespace WorkerPMNR {
         }
 
         public void Slow(int secondsDelay) {
+            if (frozenComm)
+                return;
+
             worker.ApplyDelay(secondsDelay);
         }
 
         public void BroadcastClient(int stopId, string clientURL) {
+            if (frozenComm)
+                return;
+
             this.clientURL = clientURL;
             client = (RemoteClientInterface)Activator.GetObject(typeof(RemoteClientInterface), clientURL);
             Console.ForegroundColor = ConsoleColor.DarkYellow;
@@ -199,6 +225,8 @@ namespace WorkerPMNR {
 
 
         public void SetNextNodeURL(string workerURL, IList<string> remoteWorkers) {
+            if (frozenComm)
+                return;
             Console.ForegroundColor = ConsoleColor.DarkYellow;
             Console.WriteLine("NextNodeURL: " + workerURL);
             Console.ResetColor();
@@ -213,6 +241,8 @@ namespace WorkerPMNR {
         }
 
         public void Broadcast(int stopID, int begin, int firstSplit, int bytesPerSplit, int extraBytes, int splitsPerMachine, int extraSplits, byte[] code, string className) {
+            if (frozenComm)
+                return;
 
             // init worker for each job
             worker = new Worker(code, className);
@@ -330,6 +360,9 @@ namespace WorkerPMNR {
         }
 
         public void JobMetaData(int numberSplits, int nBytes, byte[] code, string className) {
+            if (frozenComm)
+                return;
+
             #region debugComments
             //Console.WriteLine("JobMetaData -> " + numberSplits);
             #endregion
@@ -373,6 +406,9 @@ namespace WorkerPMNR {
 
 
         public int[] Connect(string workerURL) {
+            if (frozenComm)
+                throw new SocketException();
+
             this.totalNodes++;
             int newTopologyId = topologyID + 1;
 
@@ -406,6 +442,8 @@ namespace WorkerPMNR {
 
 
         public void JoinBroadcast(int stopID, int previousNodeID, int newTopologyId, string newWorker) {
+            if (frozenComm)
+                return;
             //The node receiving the broadcast updates the number of Total Nodes in the System
             // and computes it's new ID
 
@@ -434,6 +472,25 @@ namespace WorkerPMNR {
                     RepairTopologyChain();
                 }
             }
+            TimerItem.Change(TIMEOUT, TIMEOUT);
+        }
+
+        public void FreezeW() {
+            worker.ApplyFreeze();
+            FreezeC();
+        }
+
+        public void FreezeC() {
+            this.frozenComm = true;
+        }
+
+        public void UnfreezeW() {
+            worker.ApplyUnfreeze();
+            UnfreezeC();
+        }
+
+        public void UnfreezeC() {
+            this.frozenComm = false;
         }
 
         private void RepairTopologyChain() {
@@ -492,6 +549,8 @@ namespace WorkerPMNR {
         }
 
         public void RepairTopologyChain(int stopID, int deadNodeID) {
+            if (frozenComm)
+                return;
             // remove failed nodes from list
             totalNodes--;
 
@@ -514,6 +573,9 @@ namespace WorkerPMNR {
 
         // Just to check connection
         public void Check() {
+            if (frozenComm)
+                throw new SocketException();
+
             Console.BackgroundColor = ConsoleColor.DarkGreen;
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("I am Alive");
@@ -521,6 +583,8 @@ namespace WorkerPMNR {
         }
 
         public void PrintStatus() {
+            if (frozenComm)
+                return;
             Console.BackgroundColor = ConsoleColor.DarkBlue;
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("==================CURRENT STATUS===================");

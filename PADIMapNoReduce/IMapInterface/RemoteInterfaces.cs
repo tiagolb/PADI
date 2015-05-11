@@ -19,6 +19,10 @@ namespace InterfacePMNR {
         void SetClientURL(string clientURL);
         void BroadcastClient(int stopId, string clientURL);
         void Slow(int secondsDelay);
+        void FreezeW();
+        void FreezeC();
+        void UnfreezeW();
+        void UnfreezeC();
         void PrintStatus();
         void Check();
         void RepairTopologyChain(int stopID, int deadNodeID);

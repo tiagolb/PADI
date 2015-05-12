@@ -32,7 +32,7 @@ namespace PuppetMasterPMNR {
 
         public delegate void PrintDelegate();
         public delegate void FreezeDelegate();
-        public delegate void UnfreezeDelegate(bool aliveState);
+        public delegate void UnfreezeDelegate();
         public delegate void ThrottleDelegate(int id);
         public delegate void WorkerDelegate(int workerID, string serviceURL);
 
@@ -203,7 +203,7 @@ namespace PuppetMasterPMNR {
 
             RemoteWorkerInterface w = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), serviceURL);
             UnfreezeDelegate RemoteDel = new UnfreezeDelegate(w.UnfreezeW);
-            RemoteDel.BeginInvoke(aliveState, null, null);
+            RemoteDel.BeginInvoke(null, null);
             
             frozenWNodes.Remove(new KeyValuePair<int, string>(id, serviceURL));
             ReceiveNewWorker(id, serviceURL);  //Adds workerID , URL pair
@@ -245,7 +245,7 @@ namespace PuppetMasterPMNR {
 
             RemoteWorkerInterface w = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), serviceURL);
             UnfreezeDelegate RemoteDel = new UnfreezeDelegate(w.UnfreezeC);
-            RemoteDel.BeginInvoke(aliveState, null, null);
+            RemoteDel.BeginInvoke(null, null);
             
             frozenCNodes.Remove(new KeyValuePair<int, string>(id, serviceURL));
             ReceiveNewWorker(id, serviceURL);  //Adds workerID , URL pair

@@ -21,11 +21,12 @@ namespace InterfacePMNR {
         void Slow(int secondsDelay);
         void FreezeW();
         void FreezeC();
-        void UnfreezeW(bool aliveState);
-        void UnfreezeC(bool aliveState);
+        void UnfreezeW();
+        void UnfreezeC();
         void PrintStatus();
-        void Check();
+        void Check(string url);
         void RepairTopologyChain(int stopID, int deadNodeID);
+        void Reconnect();
     }
 
     public interface RemotePuppetMasterInterface {

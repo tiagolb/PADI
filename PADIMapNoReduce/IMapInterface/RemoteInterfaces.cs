@@ -24,7 +24,7 @@ namespace InterfacePMNR {
         void UnfreezeW();
         void UnfreezeC();
         void PrintStatus();
-        void Check(string url);
+        int[] Check(string url);
         void RepairTopologyChain(int stopID, int deadNodeID);
         void Reconnect();
     }

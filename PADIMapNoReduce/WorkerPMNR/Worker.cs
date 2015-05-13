@@ -15,6 +15,33 @@ using System.Threading;
 
 
 namespace WorkerPMNR {
+
+    public class ExtraWorkWrapper {
+        IList<KeyValuePair<string, int[]>> extraWorkList;
+
+        public ExtraWorkWrapper() {
+            this.extraWorkList = new List<KeyValuePair<string, int[]>>();
+        }
+
+        public void AddWork(string url, int lastSplit, int lastSentSplit) {
+            KeyValuePair<string, int[]> toAdd = new KeyValuePair<string,int[]> (url, new int[] {lastSplit, lastSentSplit});
+            KeyValuePair<string, int[]> toRemove =  new KeyValuePair<string,int[]> (null, new int[] {0, 0});
+           
+            foreach (KeyValuePair<string, int[]> p in extraWorkList) {
+                if (p.Key == toAdd.Key) {
+                    toRemove = p;
+                    break;
+                }
+            }
+            extraWorkList.Remove(toRemove);
+            extraWorkList.Add(toAdd);
+        }
+
+        public IList<KeyValuePair<string, int[]>> getExtraWork(){
+            return this.extraWorkList;
+        }
+    }
+
     public class WorkerPMNR {
 
 
@@ -150,6 +177,8 @@ namespace WorkerPMNR {
         private int currentSplitSize;
         private int totalDataToProcess;
         private int numberSplitsToProcess;
+        private int lastSentSplit;
+        private int lastSplitToProcess;
         private Worker worker;
         private RemoteWorkerInterface nextNode;
         private RemoteClientInterface client;
@@ -158,6 +187,7 @@ namespace WorkerPMNR {
         private string clientURL;
         private SplitPool<IList<string>> splitPool;
         private IList<string> remoteWorkers;
+        private ExtraWorkWrapper extraWork;
         private TimerCallback TimerDelegate;
         private const int TIMEOUT = 3000;
         private Timer TimerItem;
@@ -186,6 +216,7 @@ namespace WorkerPMNR {
             this.totalNodes = 1;
             this.id = id;
             this.nextNodeURL = this.url;
+            this.extraWork = new ExtraWorkWrapper();
             this.remoteWorkers = new List<string>();
             this.remoteWorkers.Add(this.url);
             this.puppetMaster = (RemotePuppetMasterInterface)Activator.GetObject(typeof(RemotePuppetMasterInterface), puppetMasterURL);
@@ -278,6 +309,7 @@ namespace WorkerPMNR {
             }
 
             int end = begin + correctedBytesPerMachine;
+
             int extraSplitBytes = bytesPerSplit;
 
             int beginNext = end + 1;
@@ -286,7 +318,8 @@ namespace WorkerPMNR {
                 BroadcastDelegate RemoteDel = new BroadcastDelegate(this.nextNode.Broadcast);
                 RemoteDel.BeginInvoke(stopID, beginNext, firstSplit + numberSplits, bytesPerSplit, extraBytes, splitsPerMachine, extraSplits, code, className, null, null);
             }
-            
+
+            lastSplitToProcess = firstSplit + numberSplits -1;
             Thread downloadThread = new Thread(() => getSplits(begin, end, bytesPerSplit, extraSplitBytes, stopID));
             downloadThread.Start();
             this.totalDataToProcess = end - begin;
@@ -360,6 +393,7 @@ namespace WorkerPMNR {
                 #endregion
                 splitResultDelegate RemoteDel = new splitResultDelegate(client.sendProcessedSplit);
                 RemoteDel.BeginInvoke(result.ToString(), splitId, null, null);
+                lastSentSplit = splitId;
 
                 splitId++;
                 myNumberSplits--;
@@ -474,7 +508,8 @@ namespace WorkerPMNR {
             if (!frozenComm) {
                 if (remoteWorkers.Count > 1 && nextNode != null) {
                     try {
-                        this.nextNode.Check(this.url);
+                        int[] checkResult = this.nextNode.Check(this.url);
+                        extraWork.AddWork(nextNodeURL, checkResult[0], checkResult[1]);
                     }
                     catch (Exception ex) {
                         if (ex is RemotingException || ex is SocketException) {
@@ -595,7 +630,7 @@ namespace WorkerPMNR {
         }
 
         // Just to check connection
-        public void Check(string workerUrl) {
+        public int[] Check(string workerUrl) {
             if (frozenComm)
                 throw new SocketException();
 
@@ -614,7 +649,10 @@ namespace WorkerPMNR {
             Console.BackgroundColor = ConsoleColor.DarkGreen;
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("Pinged by {0}", workerUrl);
+            if(worker!= null)
+                Console.WriteLine("Added to ExtraWork - previousNodeURL {0}, lastSentSplit {1}, lastSplitToProcess {2}", previousNodeURL, lastSentSplit, lastSplitToProcess);
             Console.ResetColor();
+            return new int[] { lastSentSplit, lastSplitToProcess };
         }
 
         public void Reconnect() {

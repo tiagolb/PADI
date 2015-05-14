@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>PuppetMaster</RootNamespace>
     <AssemblyName>PuppetMaster</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -40,7 +40,6 @@
     <Reference Include="System.Runtime.Remoting" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Deployment" />
     <Reference Include="System.Drawing" />
@@ -84,13 +83,13 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\Downloads\MapperTransfer\MapperTransfer\LibPADIMapNoReduce\LibPADIMapNoReduce.csproj">
+      <Project>{2d129022-0922-40c3-9987-17789e3a225f}</Project>
+      <Name>LibPADIMapNoReduce</Name>
+    </ProjectReference>
     <ProjectReference Include="..\ClientPMNR\ClientPMNR.csproj">
       <Project>{603e4240-9e5e-4703-9cb6-9f649be0fc88}</Project>
       <Name>ClientPMNR</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\IMapInterface\LibPADIMapNoReduce.csproj">
-      <Project>{90f62d73-f20c-4e6b-9ab4-39bf08397210}</Project>
-      <Name>LibPADIMapNoReduce</Name>
     </ProjectReference>
     <ProjectReference Include="..\UserPMNR\UserPMNR.csproj">
       <Project>{78a82a00-a8b6-48aa-a07d-e33a1516e427}</Project>

@@ -6,7 +6,6 @@ using System.Drawing;
 using System.Linq;
 using System.IO;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using PuppetMasterPMNR;
 using System.Net;
@@ -168,10 +167,11 @@ namespace PuppetMasterPMNR {
         }
 
         private void bt_step_Click(object sender, EventArgs e) {
-            if(sr != null)
-                if((s = sr.ReadLine()) != null) {
+            if (sr != null) {
+                if ((s = sr. ReadLine()) != null) {
                     ProcessCommand(s);
                 }
+            }
         }
     }
 }

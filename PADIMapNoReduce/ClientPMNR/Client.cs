@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using System.Threading.Tasks;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
@@ -116,7 +115,13 @@ namespace ClientPMNR {
          */
         public void sendProcessedSplit(string result, int splitId) {
             Client.DecTotalSplits();
-            File.WriteAllText(Client.outputFolder+splitId+".out", result);
+            try {
+                File.WriteAllText(Client.outputFolder + splitId + ".out", result);
+            }
+            catch (DirectoryNotFoundException) {
+                Directory.CreateDirectory(Client.outputFolder);
+                File.WriteAllText(Client.outputFolder + splitId + ".out", result);
+            }
             if (Client.totalSplits == 0) {
                 Client.IS_NOT_FINISHED = false;
             }

@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkerPMNR", "WorkerPMNR\Wo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibMapper", "LibMapper\LibMapper.csproj", "{483057AD-1A1C-44E9-B81A-84B68935A8D4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibPADIMapNoReduce", "..\..\..\..\Downloads\MapperTransfer\MapperTransfer\LibPADIMapNoReduce\LibPADIMapNoReduce.csproj", "{2D129022-0922-40C3-9987-17789E3A225F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibPADIMapNoReduce", "LibPADIMapNoReduce\LibPADIMapNoReduce.csproj", "{2D129022-0922-40C3-9987-17789E3A225F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

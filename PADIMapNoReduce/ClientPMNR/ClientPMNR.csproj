@@ -46,7 +46,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\Downloads\MapperTransfer\MapperTransfer\LibPADIMapNoReduce\LibPADIMapNoReduce.csproj">
+    <ProjectReference Include="..\LibPADIMapNoReduce\LibPADIMapNoReduce.csproj">
       <Project>{2d129022-0922-40c3-9987-17789e3a225f}</Project>
       <Name>LibPADIMapNoReduce</Name>
     </ProjectReference>

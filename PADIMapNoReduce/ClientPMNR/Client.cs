@@ -114,7 +114,9 @@ namespace ClientPMNR {
          * sendProcessedSplit receives a processed split from worker
          */
         public void sendProcessedSplit(string result, int splitId) {
-            Client.DecTotalSplits();
+            if (!File.Exists(Client.outputFolder + splitId + ".out")) {
+                Client.DecTotalSplits();
+            }
             try {
                 File.WriteAllText(Client.outputFolder + splitId + ".out", result);
             }

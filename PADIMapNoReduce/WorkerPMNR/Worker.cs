@@ -15,32 +15,6 @@ using System.Threading;
 
 namespace WorkerPMNR {
 
-    public class ExtraWorkWrapper {
-        IList<KeyValuePair<string, int[]>> extraWorkList;
-
-        public ExtraWorkWrapper() {
-            this.extraWorkList = new List<KeyValuePair<string, int[]>>();
-        }
-
-        public void AddWork(string url, int lastSplit, int lastSentSplit) {
-            KeyValuePair<string, int[]> toAdd = new KeyValuePair<string,int[]> (url, new int[] {lastSplit, lastSentSplit});
-            KeyValuePair<string, int[]> toRemove =  new KeyValuePair<string,int[]> (null, new int[] {0, 0});
-           
-            foreach (KeyValuePair<string, int[]> p in extraWorkList) {
-                if (p.Key == toAdd.Key) {
-                    toRemove = p;
-                    break;
-                }
-            }
-            extraWorkList.Remove(toRemove);
-            extraWorkList.Add(toAdd);
-        }
-
-        public IList<KeyValuePair<string, int[]>> getExtraWork(){
-            return this.extraWorkList;
-        }
-    }
-
     public class WorkerPMNR {
 
 
@@ -176,21 +150,27 @@ namespace WorkerPMNR {
         private int currentSplitSize;
         private int totalDataToProcess;
         private int numberSplitsToProcess;
-        private int lastSentSplit;
-        private int lastSplitToProcess;
+        private int lastSentByte;
+        private int lastByteToProcess;
         private Worker worker;
         private RemoteWorkerInterface nextNode;
         private RemoteClientInterface client;
         private RemotePuppetMasterInterface puppetMaster;
         private string nextNodeURL;
         private string clientURL;
-        private SplitPool<IList<string>> splitPool;
+        private SplitPool<KeyValuePair<int[], IList<string>>> splitPool;
         private IList<string> remoteWorkers;
         private ExtraWorkWrapper extraWork;
+        private ExtraWorkWrapper myWork;
         private TimerCallback TimerDelegate;
         private const int TIMEOUT = 3000;
         private Timer TimerItem;
         private bool frozenComm;
+        private int splitsSent;
+        private bool neighborDied = false;
+        private IList<string> deadNodes;
+        private int sendId;
+        private int firstSplit;
 
         public delegate void ReconnectDelegate();
         public delegate void IdLocationDelegate(int stopId, string clientURL);
@@ -216,9 +196,12 @@ namespace WorkerPMNR {
             this.id = id;
             this.nextNodeURL = this.url;
             this.extraWork = new ExtraWorkWrapper();
+            this.myWork = new ExtraWorkWrapper();
             this.remoteWorkers = new List<string>();
             this.remoteWorkers.Add(this.url);
             this.puppetMaster = (RemotePuppetMasterInterface)Activator.GetObject(typeof(RemotePuppetMasterInterface), puppetMasterURL);
+
+            this.deadNodes = new List<string>();
 
             TimerDelegate = new TimerCallback(CheckAlive);
             TimerItem = new Timer(TimerDelegate, new object(), TIMEOUT, TIMEOUT);
@@ -283,6 +266,8 @@ namespace WorkerPMNR {
             if (frozenComm)
                 return;
 
+            this.firstSplit = firstSplit;
+
             // init worker for each job
             worker = new Worker(code, className);
 
@@ -292,7 +277,7 @@ namespace WorkerPMNR {
                 numberSplits++;
             }
 
-            splitPool = new SplitPool<IList<string>>(numberSplits);
+            splitPool = new SplitPool<KeyValuePair<int[], IList<string>>>(numberSplits);
 
             int correctedBytesPerMachine = bytesPerSplit * numberSplits;
 
@@ -318,7 +303,9 @@ namespace WorkerPMNR {
                 RemoteDel.BeginInvoke(stopID, beginNext, firstSplit + numberSplits, bytesPerSplit, extraBytes, splitsPerMachine, extraSplits, code, className, null, null);
             }
 
-            lastSplitToProcess = firstSplit + numberSplits -1;
+            //lastSplitToProcess = firstSplit + numberSplits -1;
+            lastByteToProcess = end;
+            lastSentByte = begin;
             Thread downloadThread = new Thread(() => getSplits(begin, end, bytesPerSplit, extraSplitBytes, stopID));
             downloadThread.Start();
             this.totalDataToProcess = end - begin;
@@ -337,16 +324,20 @@ namespace WorkerPMNR {
             int endSplit = beginSplit + splitSize;
             byte[] split;
             string splitText;
+            int bytes = 0;
             IList<string> splitLines;
-            int id = 1;
-            while (endSplit < end) {
+            int id = firstSplit;
+            while (endSplit < end-1) {
                 split = this.client.getSplits(beginSplit, endSplit, extraSplitSize, id);
                 splitText = System.Text.Encoding.ASCII.GetString(split);
-                id++;
 
                 splitLines = LowMemSplit(ref splitText, Environment.NewLine);
 
-                splitPool.Add(splitLines);
+                bytes = split.Count();
+                KeyValuePair<int[], IList<string>> splitPairWhile = new KeyValuePair<int[], IList<string>>(new int[] {bytes, id}, splitLines);
+
+                splitPool.Add(splitPairWhile);
+                id++;
 
                 beginSplit = endSplit + 1;
                 endSplit = beginSplit + splitSize;
@@ -360,26 +351,86 @@ namespace WorkerPMNR {
             splitText = System.Text.Encoding.ASCII.GetString(split);
             splitLines = LowMemSplit(ref splitText, Environment.NewLine);
 
-            splitPool.Add(splitLines);
+            bytes = split.Count();
+            KeyValuePair<int[], IList<string>> splitPair = new KeyValuePair<int[], IList<string>>(new int[] {bytes, id}, splitLines); 
+
+            splitPool.Add(splitPair);
+        }
+
+        private void ProcessExtraJobs() {
+            int firstByte, lastByte, numSplits, splitSize, splitId;
+
+            byte[] split;
+            string splitText;
+            int bytes = 0;
+            IList<string> splitLines;
+            int endSplit;
+            int id;
+            IList<KeyValuePair<string, int[]>> extraWCopy = new List<KeyValuePair<string, int[]>>(myWork.getExtraWork());
+
+            foreach (KeyValuePair<string, int[]> extra in extraWCopy) {
+
+                /*
+                Console.WriteLine("extra.Key: {0}", extra.Key);
+                foreach (string deadNode in deadNodes) {
+                    Console.WriteLine("deadNode: {0}", deadNode);
+                }*/
+
+                if (deadNodes.Contains(extra.Key)) { 
+                    Console.WriteLine("Fetching ExtraJobs");
+                    lastByte = extra.Value[1];
+                    firstByte = extra.Value[0];
+                    numSplits = extra.Value[2];
+                    splitId = extra.Value[3];
+                    // Nao esquecer que pode ser o resto
+                    splitSize = (lastByte - firstByte) / numSplits;
+                    id = splitId;
+
+                    for (int i = 0; i < numSplits; i++) {
+                        endSplit = firstByte + splitSize;
+
+                        //Console.WriteLine("firstByte {0}, endSplit {1}, splitSize {2}, sendId {3}", firstByte, endSplit, splitSize, sendId);
+                        
+                        split = this.client.getSplits(firstByte, endSplit, splitSize, sendId);
+
+                        splitText = System.Text.Encoding.ASCII.GetString(split);
+
+                        splitLines = LowMemSplit(ref splitText, Environment.NewLine);
+
+                        bytes = split.Count();
+
+                        //Console.WriteLine("Extra ID: " + id);
+                        KeyValuePair<int[], IList<string>> splitPairWhile = new KeyValuePair<int[], IList<string>>(new int[] { bytes, id }, splitLines);
+                        id++;
+
+                        splitPool.Add(splitPairWhile);
+
+                        firstByte = endSplit + 1;
+                    }
+                }
+            }
         }
 
         private void processSplitsThread(int myNumberSplits, int firstSplit) {
 
-            int splitId = firstSplit;
+            sendId = firstSplit;
             IList<KeyValuePair<string, string>> processedSplit;
-            while (myNumberSplits > 0) {
-                IList<string> split;
+            while (myNumberSplits > 0 || splitPool.getElements() > 0) {
+                KeyValuePair<int[], IList<string>> split;
                 split = splitPool.Get();
-                this.currentSplit = splitId;
+                IList<string> splitList = split.Value;
+                int bytes = split.Key[0];
+                int id = split.Key[1];
+                this.currentSplit = sendId;
                 this.currentSplitSize = 0;
 
                 //for status monitoring purpose
-                foreach (string s in split) {
+                foreach (string s in splitList) {
                     this.currentSplitSize += s.Length;
                 }
 
                 StringBuilder result = new StringBuilder();
-                processedSplit = worker.processSplit(split);
+                processedSplit = worker.processSplit(splitList);
                 foreach (KeyValuePair<string, string> pair in processedSplit) {
                     result.Append(pair.Key);
                     result.Append(" : ");
@@ -391,10 +442,12 @@ namespace WorkerPMNR {
                 //Console.WriteLine("SentSplit " + splitId);
                 #endregion
                 splitResultDelegate RemoteDel = new splitResultDelegate(client.sendProcessedSplit);
-                RemoteDel.BeginInvoke(result.ToString(), splitId, null, null);
-                lastSentSplit = splitId;
-
-                splitId++;
+                RemoteDel.BeginInvoke(result.ToString(), id, null, null);
+                //lastSentByte = splitId;
+                lastSentByte += bytes;
+                splitsSent++;
+ 
+                sendId++;
                 myNumberSplits--;
             }
 
@@ -507,16 +560,36 @@ namespace WorkerPMNR {
             if (!frozenComm) {
                 if (remoteWorkers.Count > 1 && nextNode != null) {
                     try {
-                        int[] checkResult = this.nextNode.Check(this.url);
-                        extraWork.AddWork(nextNodeURL, checkResult[0], checkResult[1]);
+                        //int[] checkResult = this.nextNode.Check(this.url);
+                        ExtraWorkWrapper extraCheck = this.nextNode.Check(this.url);
+                        extraWork = extraCheck;
+                        //extraWork.AddWork(nextNodeURL, checkResult[0], checkResult[1], checkResult[2], checkResult[3]);
                     }
                     catch (Exception ex) {
                         if (ex is RemotingException || ex is SocketException) {
+                            neighborDied = true;
+
+                            
                             Console.BackgroundColor = ConsoleColor.DarkRed;
                             Console.ForegroundColor = ConsoleColor.White;
                             Console.WriteLine("Worker {0} has died - Initiate CPR protocol", this.nextNodeURL);
                             Console.ResetColor();
                             RepairTopologyChain();
+                            
+                            myWork.addExtraWork(extraWork);
+
+                            IList<KeyValuePair<string, int[]>> extraList = myWork.getExtraWork();
+                           
+                            #region debug
+                            /*foreach (KeyValuePair<string, int[]> pair in extraList) {
+                                int[] array = pair.Value;
+                                Console.WriteLine("myWork - nodeURL {0}, lastSentByte {1}, lastByteToProcess {2}, numSplitsLeft {3}", pair.Key, array[0], array[1], array[2]);
+                            }*/
+                            #endregion
+
+                            Thread downloadExtraWorkThread = new Thread(() => ProcessExtraJobs());
+                            downloadExtraWorkThread.Start();  
+
                         }
                         else throw ex;
                     }
@@ -558,6 +631,7 @@ namespace WorkerPMNR {
             nextNode = (RemoteWorkerInterface)Activator.GetObject(typeof(RemoteWorkerInterface), newNextNode);
             nextNodeURL = newNextNode;
 
+            deadNodes.Add(deadNodeURL);
             remoteWorkers.RemoveAt(deadNodeID);
 
             //Inform PuppetMasters of node failure
@@ -575,27 +649,6 @@ namespace WorkerPMNR {
                 RepairDel.BeginInvoke(stopID, deadNodeID, null, null);
             }
 
-            
-
-            #region GG
-            /*List<string> toRemoveURL = new List<string>();
-            toRemoveURL.Add(deadNodeURL); // failed node
-
-            for (int newNextNodeID = deadNodeID + 1; newNextNodeID != this.topologyID; newNextNodeID = mod((newNextNodeID + 1), totalNodes)) {
-                try {
-                    checkNewNextNodeURL(newNextNodeID);
-                    Console.WriteLine("Chain repaired with worker {0}, ID: {1}", nextNodeURL, newNextNodeID);
-                } catch (SocketException) {
-                    deadNodeURL = nextNodeURL;
-                    toRemoveURL.Add(deadNodeURL);
-                }
-            }
-
-            // remove failed nodes from list
-            foreach (string toRemoveNodeURL in toRemoveURL) {
-                remoteWorkers.Remove(toRemoveNodeURL);
-            }*/
-            #endregion
         }
 
         public void RepairTopologyChain(int stopID, int deadNodeID) {
@@ -613,7 +666,7 @@ namespace WorkerPMNR {
 
             if (this.topologyID > deadNodeID)
                 this.topologyID--;
-
+            deadNodes.Add(remoteWorkers[deadNodeID]);
             remoteWorkers.RemoveAt(deadNodeID);
 
             Console.BackgroundColor = ConsoleColor.DarkRed;
@@ -629,7 +682,7 @@ namespace WorkerPMNR {
         }
 
         // Just to check connection
-        public int[] Check(string workerUrl) {
+        public ExtraWorkWrapper Check(string workerUrl) {
             if (frozenComm)
                 throw new SocketException();
 
@@ -645,13 +698,20 @@ namespace WorkerPMNR {
                 Console.ResetColor();
             }
 
-            Console.BackgroundColor = ConsoleColor.DarkGreen;
+            int numSplitsLeft = numberSplitsToProcess - this.splitsSent;
+
+            #region heartbeatDebug
+            /*Console.BackgroundColor = ConsoleColor.DarkGreen;
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("Pinged by {0}", workerUrl);
             if(worker!= null)
-                Console.WriteLine("Added to ExtraWork - previousNodeURL {0}, lastSentSplit {1}, lastSplitToProcess {2}", previousNodeURL, lastSentSplit, lastSplitToProcess);
+                Console.WriteLine("Added to ExtraWork - previousNodeURL {0}, lastSentByte {1}, lastByteToProcess {2}, numSplitsLeft {3}", previousNodeURL, lastSentByte, lastByteToProcess,numSplitsLeft);
             Console.ResetColor();
-            return new int[] { lastSentSplit, lastSplitToProcess };
+            */
+             #endregion 
+
+            myWork.AddWork(this.url, lastSentByte, lastByteToProcess, numSplitsLeft, this.currentSplit);
+            return myWork;
         }
 
         public void Reconnect() {

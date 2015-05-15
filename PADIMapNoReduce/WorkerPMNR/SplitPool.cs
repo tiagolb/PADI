@@ -43,5 +43,9 @@ namespace WorkerPMNR {
             }
             return o;
         }
+
+        public int getElements() {
+            return elements;
+        }
     }
 }
